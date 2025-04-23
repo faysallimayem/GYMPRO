@@ -1,0 +1,86 @@
+name: saad_s_application
+description: A new Flutter project.
+version: 1.0.0+1
+environment: 
+  sdk: ^3.6.0
+  flutter: "3.27.3"
+dependencies: 
+  flutter: 
+    sdk: flutter
+  flutter_localizations: 
+    sdk: flutter
+  cached_network_image: ^3.4.1
+  flutter_svg: ^2.0.16
+  gradient_borders: ^1.0.1
+  responsive_grid_list: ^1.4.0
+  flutter_chat_ui: ^1.6.15
+  flutter_chat_types: ^3.6.2
+  calendar_date_picker2: ^2.0.0
+  flutter_lints: ^5.0.0
+dev_dependencies: 
+  flutter_test: 
+    sdk: flutter
+flutter: 
+  uses-material-design: true
+  assets: 
+    - assets/
+    - assets/images/
+  fonts: 
+    - family: Poppins
+      fonts: 
+        - asset: assets/fonts/PoppinsMedium.ttf
+          weight: 500
+        - asset: assets/fonts/PoppinsRegular.ttf
+          weight: 400
+        - asset: assets/fonts/PoppinsBold.ttf
+          weight: 700
+        - asset: assets/fonts/PoppinsExtraLight.ttf
+          weight: 300
+        - asset: assets/fonts/PoppinsSemiBold.ttf
+          weight: 600
+    - family: Work Sans
+      fonts: 
+        - asset: assets/fonts/WorkSansRegular.ttf
+          weight: 400
+        - asset: assets/fonts/WorkSansSemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/WorkSansBold.ttf
+          weight: 700
+        - asset: assets/fonts/WorkSansExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/WorkSansLight.ttf
+          weight: 300
+        - asset: assets/fonts/WorkSansMedium.ttf
+          weight: 500
+    - family: Inter
+      fonts: 
+        - asset: assets/fonts/InterMedium.ttf
+          weight: 500
+        - asset: assets/fonts/InterBold.ttf
+          weight: 700
+        - asset: assets/fonts/InterSemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/InterRegular.ttf
+          weight: 400
+        - asset: assets/fonts/InterThin.ttf
+          weight: 100
+        - asset: assets/fonts/InterLight.ttf
+          weight: 300
+        - asset: assets/fonts/InterExtraLight.ttf
+          weight: 200
+    - family: League Spartan
+      fonts: 
+        - asset: assets/fonts/LeagueSpartanSemiBold.ttf
+          weight: 600
+    - family: Signika
+      fonts: 
+        - asset: assets/fonts/SignikaRegular.ttf
+          weight: 400
+    - family: TT Commons
+      fonts: 
+        - asset: assets/fonts/TTCommonsDemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/TTCommonsMedium.ttf
+          weight: 500
+        - asset: assets/fonts/TTCommonsRegular.ttf
+          weight: 400
