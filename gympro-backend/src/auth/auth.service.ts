@@ -32,7 +32,7 @@ export class AuthService {
         
         
         //const payload = { sub: user.id, email: user.email, Role:user.role }; };
-        const payload = { sub: userData.id, email: userData.email, Role:userData.role };
+        const payload = { sub: userData.id, email: userData.email, role:userData.role };
         const access_token = this.jwtService.sign(payload);
         return { access_token };
 
@@ -57,7 +57,7 @@ export class AuthService {
        })
 
        //JWT
-       const payload ={email: newUser.email, sub: newUser.id, Role: newUser.role};
+       const payload ={email: newUser.email, sub: newUser.id, role: newUser.role};
        const access_token= this.jwtService.sign(payload);
        return {access_token};
     } 

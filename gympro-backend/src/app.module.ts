@@ -5,6 +5,12 @@ import { User } from './user/user.entity';
 
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
+import { ExerciseModule } from './exercise/exercise.module';
+import { WorkoutModule } from './workout/workout.module';
+import { Exercise } from './exercise/exercise.entity';
+import { Workout } from './workout/workout.entity';
+import { NutritionModule } from './nutrition/nutrition.module';
+import { Nutrition } from './nutrition/nutrition.entity';
 
 
 
@@ -20,9 +26,9 @@ import { AuthModule } from './auth/auth.module';
       username: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || 'Faysallimayem123!',
       database: process.env.DB_NAME || 'gympro_db',
-      entities: [User], 
+      entities: [User,Exercise,Workout,Nutrition], 
       synchronize: true, 
-    }), UserModule, AuthModule,
+    }), UserModule, AuthModule, ExerciseModule, WorkoutModule, NutritionModule,
   ],
 })
 export class AppModule {}
