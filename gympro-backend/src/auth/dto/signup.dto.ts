@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEmail, MinLength, IsDate, IsOptional, IsNumber, IsEnum } from 'class-validator';
+import { IsString, IsEmail, MinLength, IsOptional, IsNumber, IsEnum, Min, Max } from 'class-validator';
 import { Role } from 'src/user/role.enum';
 
 export class SignupDto {
@@ -19,7 +19,10 @@ export class SignupDto {
   @MinLength(6)
   mot_de_passe: string;
 
-  @ApiProperty({ example: '25 ans' })
+  @ApiProperty({ example: 25 })
+  @IsNumber()
+  @Min(12)
+  @Max(100)
   age: number;
 
   @ApiProperty({ example: 180, required: false })

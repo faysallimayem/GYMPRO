@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
 import '../responsive_utils.dart';
 import '../routes/app_routes.dart';
 import '../widgets.dart';
+import '../services/registration_provider.dart';
 
 class AgeScreen extends StatefulWidget {
   const AgeScreen({Key? key}) : super(key: key);
@@ -268,6 +270,11 @@ class _AgeScreenState extends State<AgeScreen> {
         fontFamily: CustomTextStyles.headlineSmallPoppinsWhiteA700.fontFamily,
       ),
       onPressed: () {
+        // Save selected age to registration provider
+        final registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
+        registrationProvider.setAge(selectedAge);
+        
+        // Navigate to height screen
         Navigator.pushNamed(context, AppRoutes.heightScreen);
       },
     );

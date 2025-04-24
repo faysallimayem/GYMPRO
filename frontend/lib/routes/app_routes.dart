@@ -117,6 +117,6 @@ class AppRoutes {
     exerciceExplicationScreen: (context) => ExerciceExplicationScreen(),
     coachProfileScreen: (context) => CoachProfileScreen(),
     editUserProfileScreen: (context) => EditUserProfileScreen(),
-    initialRoute: (context) => HeightScreen(),
+    initialRoute: (context) => GetStartedScreen(),
   };
 }

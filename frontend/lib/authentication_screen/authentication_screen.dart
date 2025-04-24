@@ -1,19 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
 import '../routes/app_routes.dart';
 import '../widgets.dart';
+import '../services/auth_service.dart';
 
 // ignore_for_file: must_be_immutable
-class AuthenticationScreen extends StatelessWidget {
+class AuthenticationScreen extends StatefulWidget {
   AuthenticationScreen({Key? key})
       : super(
           key: key,
         );
 
-  TextEditingController emailController = TextEditingController();
+  @override
+  State<AuthenticationScreen> createState() => _AuthenticationScreenState();
+}
 
+class _AuthenticationScreenState extends State<AuthenticationScreen> {
+  TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  
+  bool _isLoading = false;
+  String? _errorMessage;
+  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -74,15 +84,25 @@ class AuthenticationScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 46.h),
+              SizedBox(height: 20.h),
+              if (_errorMessage != null)
+                Padding(
+                  padding: EdgeInsets.only(bottom: 16.h),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(color: Colors.red, fontSize: 14.h),
+                  ),
+                ),
+              SizedBox(height: 10.h),
               CustomElevatedButton(
                 height: 46.h,
-                text: "Log in",
+                text: _isLoading ? "Logging in..." : "Log in",
                 margin: EdgeInsetsDirectional.only(
                   start: 8.h,
                   end: 2.h,
                 ),
                 buttonTextStyle: CustomTextStyles.headlineSmallPoppinsWhiteA700,
+                onPressed: _isLoading ? null : _handleLogin,
               ),
               SizedBox(height: 18.h),
               CustomElevatedButton(
@@ -102,6 +122,44 @@ class AuthenticationScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _handleLogin() async {
+    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+      setState(() {
+        _errorMessage = "Please enter both email and password";
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await Provider.of<AuthService>(context, listen: false).login(
+        emailController.text.trim(), 
+        passwordController.text
+      );
+      
+      // Navigate to home screen on successful login
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, AppRoutes.homeScreen);
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString().contains('ApiException') 
+            ? "Invalid email or password" 
+            : "Connection error. Please try again.";
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   /// Section Widget
@@ -170,19 +228,26 @@ class AuthenticationScreen extends StatelessWidget {
             prefixConstraints: BoxConstraints(
               maxHeight: 48.h,
             ),
-            suffix: Container(
-              margin: EdgeInsetsDirectional.fromSTEB(16.h, 14.h, 12.h, 14.h),
-              child: CustomImageView(
-                imagePath: ImageConstant.imgEye,
-                height: 18.h,
-                width: 20.h,
-                fit: BoxFit.contain,
+            suffix: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
+              child: Container(
+                margin: EdgeInsetsDirectional.fromSTEB(16.h, 14.h, 12.h, 14.h),
+                child: CustomImageView(
+                  imagePath: ImageConstant.imgEye,
+                  height: 18.h,
+                  width: 20.h,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
             suffixConstraints: BoxConstraints(
               maxHeight: 48.h,
             ),
-            obscureText: true,
+            obscureText: _obscurePassword,
             contentPadding: EdgeInsetsDirectional.all(12.h),
             borderDecoration: TextFormFieldStyleHelper.outlineBlueGray,
             fillColor: appTheme.whiteA700,

@@ -19,6 +19,7 @@ export class User {
     @Column()
     mot_de_passe: string;
 
+
     @Column({})
     age: number;
 
