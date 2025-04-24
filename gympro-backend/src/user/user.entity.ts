@@ -19,8 +19,8 @@ export class User {
     @Column()
     mot_de_passe: string;
 
-    @Column({type: 'date', nullable: true})
-    dateNaissance: Date;
+    @Column({})
+    age: number;
 
     @Column({nullable: true })
     hauteur: number;

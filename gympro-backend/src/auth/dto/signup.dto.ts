@@ -19,9 +19,8 @@ export class SignupDto {
   @MinLength(6)
   mot_de_passe: string;
 
-  @ApiProperty({ example: '1995-06-15' })
-  @IsDate()
-  dateNaissance: Date;
+  @ApiProperty({ example: '25 ans' })
+  age: number;
 
   @ApiProperty({ example: 180, required: false })
   @IsOptional()
