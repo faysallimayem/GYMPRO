@@ -19,8 +19,13 @@ export class User {
     @Column()
     mot_de_passe: string;
 
+<<<<<<< HEAD
     @Column()
     age: number;
+=======
+    @Column({type: 'date', nullable: true})
+    dateNaissance: Date;
+>>>>>>> 9d1304d90bc080f06820fa32cca9c346fa19f594
 
     @Column({nullable: true })
     hauteur: number;

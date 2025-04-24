@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserService } from 'src/user/user.service';
-import { ApiBody, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 
@@ -19,18 +19,21 @@ export class AuthController {
     ) {}
 
     @Post('signup')
+    @ApiOperation({ summary: 'Sign up a new user' })
     @ApiBody({ type: SignupDto })
     async signUp(@Body() createUserDto: CreateUserDto) {
         return this.authService.signUp(createUserDto);
     }
 
     @Post('login')
+    @ApiOperation({ summary: 'Log in a user' })
     @ApiBody({ type: LoginDto })
     async logIn(@Body() loginDto: LoginDto) {
         return this.authService.logIn(loginDto.email, loginDto.mot_de_passe);
     }
 
     @Post('forgot-password')
+    @ApiOperation({ summary: 'Request a password reset' })
     @ApiBody({ type: ForgotPasswordDto })
     async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
         const user = await this.userService.getByEmail(forgotPasswordDto.email);
@@ -44,6 +47,7 @@ export class AuthController {
     }
 
     @Post('reset-password')
+    @ApiOperation({ summary: 'Reset user password' })
     @ApiBody({ type: ResetPasswordDto })
     async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
         const { token, newPassword } = resetPasswordDto;
@@ -55,7 +59,7 @@ export class AuthController {
         await this.authService.updateUserPassword(await userId, newPassword);
         return { message: 'Password updated successfully' };
     }
-
+    @ApiBearerAuth()
     @UseGuards(AuthGuard('jwt'))
     @Get('me')
     async getProfile(@Req() req) {
