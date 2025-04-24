@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
 import '../routes/app_routes.dart';
 import '../widgets.dart';
+import '../services/auth_service.dart';
+import '../services/registration_provider.dart';
 
 // ignore_for_file: must_be_immutable
 class SignUpScreen extends StatefulWidget {
@@ -17,18 +20,14 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   TextEditingController firstNameController = TextEditingController();
-
   TextEditingController namesevenController = TextEditingController();
-
-  TextEditingController userNameController = TextEditingController();
-
   TextEditingController emailController = TextEditingController();
-
   TextEditingController passwordController = TextEditingController();
-
   TextEditingController confirmpasswordController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
+  String? _errorMessage;
   
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -37,7 +36,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Map<String, String?> errorMessages = {
     'firstName': null,
     'secondName': null,
-    'userName': null,
     'email': null,
     'password': null,
     'confirmPassword': null,
@@ -82,14 +80,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     SizedBox(height: 2.h),
                     _buildSecondNameInput(context),
                     SizedBox(height: 16.h),
-                    _buildUsernameInput(context),
-                    SizedBox(height: 16.h),
                     _buildEmailInput(context),
                     SizedBox(height: 14.h),
                     _buildPasswordInput(context),
                     SizedBox(height: 12.h),
                     _buildConfirmPasswordInput(context),
-                    SizedBox(height: 36.h),
+                    SizedBox(height: 20.h),
+                    if (_errorMessage != null)
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 16.h),
+                        child: Text(
+                          _errorMessage!,
+                          style: TextStyle(color: Colors.red, fontSize: 14.h),
+                        ),
+                      ),
+                    SizedBox(height: 16.h),
                     GestureDetector(
                       onTap: () {
                         Navigator.pushNamed(context, AppRoutes.authenticationScreen);
@@ -117,14 +122,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     CustomElevatedButton(
                       height: 46.h,
                       width: 216.h,
-                      text: "Continue",
+                      text: _isLoading ? "Creating account..." : "Continue",
                       buttonTextStyle:
                           CustomTextStyles.headlineSmallPoppinsWhiteA700,
-                          onPressed: () {
-                            if (_validateForm()) {
-                              Navigator.pushNamed(context, AppRoutes.genderScreen);
-                            }
-                          },
+                      onPressed: _isLoading ? null : _handleSignUp,
                     ),
                     SizedBox(height: 34.h)
                   ],
@@ -135,6 +136,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
       ),
     );
+  }
+
+  void _handleSignUp() async {
+    if (!_validateForm()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Store user data in registration provider
+      final registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
+      registrationProvider.setBasicInfo(
+        nom: firstNameController.text.trim(),
+        prenom: namesevenController.text.trim(),
+        email: emailController.text.trim(),
+        motDePasse: passwordController.text,
+      );
+      
+      // Navigate to gender screen to continue registration flow
+      if (mounted) {
+        Navigator.pushNamed(context, AppRoutes.genderScreen);
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = "An error occurred. Please try again.";
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   bool _validateForm() {
@@ -161,18 +199,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } else {
       setState(() {
         errorMessages['secondName'] = null;
-      });
-    }
-    
-    // Validate Username
-    if (userNameController.text.trim().isEmpty) {
-      setState(() {
-        errorMessages['userName'] = 'Username is required';
-      });
-      isValid = false;
-    } else {
-      setState(() {
-        errorMessages['userName'] = null;
       });
     }
     
@@ -325,51 +351,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               padding: EdgeInsets.only(top: 4.h),
               child: Text(
                 errorMessages['secondName']!,
-                style: TextStyle(color: Colors.red, fontSize: 12.h),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildUsernameInput(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      margin: EdgeInsetsDirectional.only(end: 10.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Username",
-            style: CustomTextStyles.titleSmallWorkSansOnPrimary,
-          ),
-          SizedBox(height: 8.h),
-          CustomTextFormField(
-            controller: userNameController,
-            hintText: "Enter your username..",
-            prefix: Container(
-              margin: EdgeInsetsDirectional.fromSTEB(12.h, 14.h, 8.h, 14.h),
-              child: CustomImageView(
-                imagePath: ImageConstant.imgFissuser,
-                height: 18.h,
-                width: 16.h,
-                fit: BoxFit.contain,
-              ),
-            ),
-            prefixConstraints: BoxConstraints(
-              maxHeight: 48.h,
-            ),
-            contentPadding: EdgeInsetsDirectional.all(12.h),
-            borderDecoration: TextFormFieldStyleHelper.outlineBlueGray,
-            fillColor: appTheme.whiteA700,
-          ),
-          if (errorMessages['userName'] != null)
-            Padding(
-              padding: EdgeInsets.only(top: 4.h),
-              child: Text(
-                errorMessages['userName']!,
                 style: TextStyle(color: Colors.red, fontSize: 12.h),
               ),
             ),

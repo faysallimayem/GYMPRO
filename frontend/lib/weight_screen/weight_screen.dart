@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'dart:convert';
 import '../app_theme.dart';
 import '../app_utils.dart';
 import '../responsive_utils.dart';
 import '../routes/app_routes.dart';
 import '../widgets.dart';
+import '../services/registration_provider.dart';
+import '../services/auth_service.dart';
 
-class WeightScreen extends StatelessWidget {
+class WeightScreen extends StatefulWidget {
   const WeightScreen({Key? key}) : super(key: key);
+
+  @override
+  State<WeightScreen> createState() => _WeightScreenState();
+}
+
+class _WeightScreenState extends State<WeightScreen> {
+  int selectedWeight = 75; // Default weight
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +50,18 @@ class WeightScreen extends StatelessWidget {
                 _buildLineDividerRow(context),
                 SizedBox(height: context.heightRatio(0.04)),
                 _buildWeightDisplay(context),
+                if (_errorMessage != null)
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      vertical: context.heightRatio(0.02),
+                      horizontal: context.widthRatio(0.05),
+                    ),
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
                 Spacer(flex: 37),
                 _buildContinueButton(context),
                 SizedBox(height: context.heightRatio(0.05))
@@ -63,6 +88,18 @@ class WeightScreen extends StatelessWidget {
                         _buildLineDividerRow(context),
                         SizedBox(height: context.heightRatio(0.05)),
                         _buildWeightDisplay(context),
+                        if (_errorMessage != null)
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: context.heightRatio(0.02),
+                              horizontal: context.widthRatio(0.05),
+                            ),
+                            child: Text(
+                              _errorMessage!,
+                              style: TextStyle(color: Colors.red),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -99,6 +136,18 @@ class WeightScreen extends StatelessWidget {
                       _buildLineDividerRow(context),
                       SizedBox(height: context.heightRatio(0.05)),
                       _buildWeightDisplay(context),
+                      if (_errorMessage != null)
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: context.heightRatio(0.02),
+                            horizontal: context.widthRatio(0.05),
+                          ),
+                          child: Text(
+                            _errorMessage!,
+                            style: TextStyle(color: Colors.red),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       SizedBox(height: context.heightRatio(0.08)),
                       _buildContinueButton(context),
                     ],
@@ -245,7 +294,7 @@ class WeightScreen extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          "75",
+          selectedWeight.toString(),
           style: TextStyle(
             fontSize: context.responsiveFontSize(60),
             fontWeight: FontWeight.bold,
@@ -339,16 +388,63 @@ class WeightScreen extends StatelessWidget {
         tablet: context.widthRatio(0.4),
         desktop: context.widthRatio(0.25),
       ),
-      text: "Continue",
+      text: _isLoading ? "Creating account..." : "Continue",
       buttonTextStyle: TextStyle(
         fontSize: context.responsiveFontSize(18),
         color: Colors.white,
         fontWeight: FontWeight.bold,
         fontFamily: CustomTextStyles.headlineSmallPoppinsWhiteA700.fontFamily,
       ),
-      onPressed: () {
-        Navigator.pushNamed(context, AppRoutes.homeScreen);
-      },
+      onPressed: _isLoading ? null : _completeRegistration,
     );
+  }
+  
+  /// Complete the registration process
+  void _completeRegistration() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    
+    try {
+      // Save the selected weight in provider
+      final registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
+      registrationProvider.setWeight(selectedWeight);
+      
+      // Get complete user data for registration
+      final userData = registrationProvider.getCompleteUserData();
+      
+      // Debug print - remove in production
+      print('Sending registration data: ${json.encode(userData)}');
+      
+      // Call the signup API with all collected data - making sure to use POST
+      final result = await Provider.of<AuthService>(context, listen: false).signUp(userData);
+      
+      // Debug - remove in production
+      print('Registration successful: $result');
+      
+      // Navigate to home screen on success
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.homeScreen,
+        (route) => false
+      );
+    } catch (e) {
+      print('Registration error: $e'); // Debug - remove in production
+      setState(() {
+        _errorMessage = e.toString();
+        if (e.toString().contains('409')) {
+          _errorMessage = "Email already exists";
+        } else {
+          _errorMessage = "Registration failed: ${e.toString()}";
+        }
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 }

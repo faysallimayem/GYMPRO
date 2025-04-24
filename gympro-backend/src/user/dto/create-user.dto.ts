@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsEnum, IsNumber, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
 import { Role } from '../role.enum';
 import { Transform } from 'class-transformer';
 
@@ -15,6 +15,22 @@ export class CreateUserDto {
     @IsString()
     @MinLength(6)
     mot_de_passe: string;
+
+    @IsNumber()
+    @Min(12)
+    @Max(100)
+    age: number;
+
+    @IsOptional()
+    @IsNumber()
+    hauteur?: number;
+
+    @IsOptional()
+    @IsNumber()
+    poids?: number;
+
+    @IsString()
+    sexe: string;
 
     @IsOptional()
     @IsEnum(Role, { message: 'Role must be CLIENT, COACH, or ADMIN' })

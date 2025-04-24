@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
 import '../responsive_utils.dart';
 import '../routes/app_routes.dart';
 import '../widgets.dart';
+import '../services/registration_provider.dart';
 
 class GenderScreen extends StatefulWidget {
   const GenderScreen({Key? key}) : super(key: key);
@@ -211,6 +213,11 @@ class _GenderScreenState extends State<GenderScreen> {
       ),
       onPressed: () {
         if (selectedGender.isNotEmpty) {
+          // Save selected gender to registration provider
+          final registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
+          registrationProvider.setGender(selectedGender);
+          
+          // Navigate to age screen
           Navigator.pushNamed(
             context,
             AppRoutes.ageScreen,

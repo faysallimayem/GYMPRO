@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../app_theme.dart';
 import '../routes/app_routes.dart';
+import '../services/registration_provider.dart';
 
 class HeightScreen extends StatefulWidget {
   const HeightScreen({Key? key}) : super(key: key);
@@ -205,6 +207,11 @@ class _HeightScreenState extends State<HeightScreen> {
                     height: screenHeight * 0.065, // Responsive height
                     child: ElevatedButton(
                       onPressed: () {
+                        // Save height to registration provider
+                        final registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
+                        registrationProvider.setHeight(currentHeight);
+                        
+                        // Navigate to weight screen
                         Navigator.pushNamed(context, AppRoutes.weightScreen);
                       },
                       style: ElevatedButton.styleFrom(
