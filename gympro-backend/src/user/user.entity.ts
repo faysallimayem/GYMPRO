@@ -7,34 +7,29 @@ export class User {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
-    nom: string;
+    @Column({ name: 'nom' })
+    lastName: string;
 
-    @Column()
-    prenom: string;
+    @Column({ name: 'prenom' })
+    firstName: string;
 
     @Column({ unique: true })
     email: string;
 
-    @Column()
-    mot_de_passe: string;
+    @Column({ name: 'mot_de_passe' })
+    password: string;
 
-<<<<<<< HEAD
-    @Column()
+    @Column({nullable: true})
     age: number;
-=======
-    @Column({type: 'date', nullable: true})
-    dateNaissance: Date;
->>>>>>> 9d1304d90bc080f06820fa32cca9c346fa19f594
 
-    @Column({nullable: true })
-    hauteur: number;
+    @Column({ name: 'hauteur', nullable: true })
+    height: number;
 
-    @Column({nullable: true })
-    poids: number;
+    @Column({ name: 'poids', nullable: true })
+    weight: number;
 
-    @Column({})
-    sexe: string;
+    @Column({ name: 'sexe' })
+    gender: string;
 
     @Column({
         type: 'enum',

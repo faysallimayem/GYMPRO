@@ -1,7 +1,8 @@
+// ignore_for_file: depend_on_referenced_packages, unnecessary_this, use_super_parameters
+
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
-import '../app_theme.dart';
 
 final Map<String, String> en = {
   "lbl": "←",
@@ -144,7 +145,7 @@ final Map<String, String> en = {
   "lbl_muscle_group2": "Muscle Group",
   "lbl_name": "Name",
   "lbl_next": "Next",
-  "lbl_nick": "Nick",
+  "lbl_nick": "Username",
   "lbl_none": "None",
   "lbl_password": "Password",
   "lbl_per_100g": "Per 100g",
@@ -214,7 +215,8 @@ final Map<String, String> en = {
   "msg_please_select_the":
       "Please select the following options to reset your password.",
   "msg_today_s_workouts": "Today’s Workouts",
-  "msg_welcome_back_nick": "Welcome back, Nick!",
+  "msg_welcome_back_nick": "Welcome back, Username!",
+  "msg_welcome_back_nick": "Welcome back, Username!",
   "msg_what_is_your_height": "What Is Your height?",
   "msg_what_is_your_weight": "What Is Your Weight?",
   "msg_what_s_your_gender": "What’s Your Gender",
@@ -367,7 +369,7 @@ final Map<String, String> ar = {
   "lbl_muscle_group2": "Muscle Group",
   "lbl_name": "Name",
   "lbl_next": "Next",
-  "lbl_nick": "Nick",
+  "lbl_nick": "Username",
   "lbl_none": "None",
   "lbl_password": "Password",
   "lbl_per_100g": "Per 100g",
@@ -437,7 +439,7 @@ final Map<String, String> ar = {
   "msg_please_select_the":
       "Please select the following options to reset your password.",
   "msg_today_s_workouts": "Today’s Workouts",
-  "msg_welcome_back_nick": "Welcome back, Nick!",
+  "msg_welcome_back_nick": "Welcome back, Username!",
   "msg_what_is_your_height": "What Is Your height?",
   "msg_what_is_your_weight": "What Is Your Weight?",
   "msg_what_s_your_gender": "What’s Your Gender",
@@ -451,15 +453,15 @@ final Map<String, String> ar = {
 };
 // These are the Viewport values of your Figma Design.
 // These are used in the code as a reference to create your UI Responsively.
-const num FIGMA_DESIGN_WIDTH = 430;
-const num FIGMA_DESIGN_HEIGHT = 932;
-const num FIGMA_DESIGN_STATUS_BAR = 0;
+const num figmaDesignWidth = 430;
+const num figmaDesignHeight = 932;
+const num figmaDesignStatusBar = 0;
 const String dateTimeFormatPattern = 'dd/MM/yyyy';
 
 extension ResponsiveExtension on num {
   double get _width => SizeUtils.width;
-  double get h => ((this * _width) / FIGMA_DESIGN_WIDTH);
-  double get fSize => ((this * _width) / FIGMA_DESIGN_WIDTH);
+  double get h => ((this * _width) / figmaDesignWidth);
+  double get fSize => ((this * _width) / figmaDesignWidth);
 }
 
 extension FormatExtension on double {
@@ -562,6 +564,12 @@ class ImageConstant {
   static String imgMedicalIconINutritionBlack900 ='$imagePath/img_medical_icon_i_nutrition_black_900.svg';
 
   static String imgMaximizeBlack900 = '$imagePath/img_maximize_black_900.svg';
+  
+  static String imgEmail = '$imagePath/email.png';
+
+  static String imgLogout = '$imagePath/Logout.png';
+
+  static String imgProfile = '$imagePath/Profile.png';
 
   static String imgRewind = '$imagePath/img_rewind.svg';
 
@@ -634,26 +642,64 @@ class ImageConstant {
   static String imgEllipse3370 = '$imagePath/img_ellipse_3370.png';
 
   static String imageNotFound = 'assets/images/image_not_found.png';
+  
+  static String imgDarkMode = '$imagePath/dark_mode.svg';
+  
+  static String imgWeightUnit = '$imagePath/weight_unit.svg';
+
+  static String imgChangePassword = '$imagePath/change_password.svg';
+
+  static String imgPrivacyPolicy = '$imagePath/privacy_policy.svg';
+
+  static String imgTermsService = '$imagePath/terms_service.svg';
+
+  static String imgHelpCenter = '$imagePath/help_center.svg';
+
+  static String imgContactUs = '$imagePath/contact_us.svg';
+  
+  static String imgAppInfo = '$imagePath/app_info.svg';
 }
 
-class Sizer extends StatelessWidget {
+class Sizer extends StatefulWidget {
   const Sizer({Key? key, required this.builder}) : super(key: key);
 
   /// Builds the widget whenever the orientation changes.
   final ResponsiveBuild builder;
 
   @override
+  State<Sizer> createState() => _SizerState();
+}
+
+class _SizerState extends State<Sizer> with WidgetsBindingObserver {
+  // Store current route to preserve during resizes
+  String? _currentRoute;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       return OrientationBuilder(builder: (context, orientation) {
+        // Set screen size without triggering full layout rebuild
         SizeUtils.setScreenSize(constraints, orientation);
-        return builder(context, orientation, SizeUtils.deviceType);
+        
+        // Use the builder from the parent widget
+        return widget.builder(context, orientation, SizeUtils.deviceType);
       });
     });
   }
 }
 
-// ignore_for_file: must_be_immutable
 class SizeUtils {
   /// Device's BoxConstraints
   static late BoxConstraints boxConstraints;
@@ -680,11 +726,11 @@ class SizeUtils {
     orientation = currentOrientation;
     if (orientation == Orientation.portrait) {
       width =
-          boxConstraints.maxWidth.isNonZero(defaultValue: FIGMA_DESIGN_WIDTH);
+          boxConstraints.maxWidth.isNonZero(defaultValue: figmaDesignWidth);
       height = boxConstraints.maxHeight.isNonZero();
     } else {
       width =
-          boxConstraints.maxHeight.isNonZero(defaultValue: FIGMA_DESIGN_WIDTH);
+          boxConstraints.maxHeight.isNonZero(defaultValue: figmaDesignWidth);
       height = boxConstraints.maxWidth.isNonZero();
     }
     deviceType = DeviceType.mobile;

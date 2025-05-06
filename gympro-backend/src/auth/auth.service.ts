@@ -16,30 +16,55 @@ export class AuthService {
         private jwtService: JwtService
     ) {}
 
-    async logIn(email: string, mot_de_passe: string): Promise<{access_token: string}>{
-        const user = await this.userService.getByEmail(email);
-        if (!user) {
-            throw new UnauthorizedException('Email not found');
-        }
+    async logIn(email: string, password: string): Promise<{access_token: string}>{
+        try {
+            const user = await this.userService.getByEmail(email);
+            if (!user) {
+                throw new UnauthorizedException('Email not found');
+            }
 
-        const auth_password = await bcrypt.compare(mot_de_passe, user.mot_de_passe);
-        if (!auth_password) {
-            throw new UnauthorizedException('Incorrect password');
-        }
-        
-        //mot de passe destructuring
-        const { mot_de_passe: password, ...userData } = user;
-        
-        
-        //const payload = { sub: user.id, email: user.email, Role:user.role }; };
-        const payload = { sub: userData.id, email: userData.email, role:userData.role };
-        const access_token = this.jwtService.sign(payload);
-        return { access_token };
+            // Log what we're comparing
+            console.log('Auth attempt - Email:', email);
 
+            if (!password) {
+                console.error('Password is missing in login request');
+                throw new UnauthorizedException('Password is required');
+            }
+            
+            // Use the password field (which maps to mot_de_passe column)
+            if (!user.password) {
+                console.error('User has no password hash stored');
+                throw new UnauthorizedException('Invalid login credentials');
+            }
+
+            try {
+                const auth_password = await bcrypt.compare(password, user.password);
+                if (!auth_password) {
+                    throw new UnauthorizedException('Incorrect password');
+                }
+            } catch (bcryptError) {
+                console.error('bcrypt comparison error:', bcryptError.message);
+                throw new UnauthorizedException('Authentication failed');
+            }
+            
+            // Password destructuring
+            const { password: pwd, ...userData } = user;
+            
+            const payload = { sub: userData.id, email: userData.email, role: userData.role };
+            const access_token = this.jwtService.sign(payload);
+            console.log('Authentication successful for user:', email);
+            return { access_token };
+        } catch (error) {
+            console.error('Login error:', error.message);
+            if (error instanceof UnauthorizedException) {
+                throw error;
+            }
+            throw new UnauthorizedException('Authentication failed');
+        }
     }
 
-    async signUp(CreateUserDto: CreateUserDto): Promise<{access_token: string}>  {
-       const {email, mot_de_passe} = CreateUserDto;
+    async signUp(createUserDto: CreateUserDto): Promise<{access_token: string}>  {
+       const {email, password} = createUserDto;
 
        //checking email 
        const existingUser = await this.userService.getByEmail(email);
@@ -48,17 +73,17 @@ export class AuthService {
        }
 
        //hashing password
-       const hashedPassword = await bcrypt.hash(mot_de_passe, 10);
+       const hashedPassword = await bcrypt.hash(password, 10);
 
        //create new user
        const newUser = await this.userService.create({
-        ...CreateUserDto,
-        mot_de_passe: hashedPassword,
-       })
+        ...createUserDto,
+        password: hashedPassword,
+       });
 
        //JWT
-       const payload ={email: newUser.email, sub: newUser.id, role: newUser.role};
-       const access_token= this.jwtService.sign(payload);
+       const payload = {email: newUser.email, sub: newUser.id, role: newUser.role};
+       const access_token = this.jwtService.sign(payload);
        return {access_token};
     } 
 
@@ -67,12 +92,13 @@ export class AuthService {
     }
 
     async sendResetEmail(email: string, token: string) {
-        const resetLink = `http://localhost:3000/reset-password?token=${token}`;
+        // Create a universal link that will work on both platforms
+        const universalResetLink = `http://localhost:3000/redirect-reset?token=${token}`;
       
         const transporter = nodemailer.createTransport({
           host: emailConfig.host,
           port: emailConfig.port,
-          secure: emailConfig.secure, // Use `true` if using port 465
+          secure: emailConfig.secure,
           auth: {
             user: emailConfig.auth.user,
             pass: emailConfig.auth.pass,
@@ -82,12 +108,25 @@ export class AuthService {
         const mailOptions = {
           from: emailConfig.from, 
           to: email,
-          subject: "Reset Password",
+          subject: "Reset Your Password - GYM PRO",
           html: `
-            <p>You requested a password reset.</p>
-            <p>Click the link below to reset your password:</p>
-            <a href="${resetLink}">${resetLink}</a> 
-            <p>If you didn't request this, please ignore this email.</p>
+            <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; border-radius: 5px;">
+              <div style="text-align: center; margin-bottom: 20px;">
+                <img src="https://via.placeholder.com/150x60?text=GYMPRO" alt="GYM PRO Logo" style="max-width: 150px;">
+              </div>
+              <h2 style="color: #FF6B00; text-align: center;">Password Reset</h2>
+              <p style="color: #333; font-size: 16px; line-height: 1.5; margin-bottom: 20px;">You requested a password reset for your GYM PRO account. Click the button below to set a new password:</p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${universalResetLink}" style="background-color: #FF6B00; color: white; padding: 12px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; font-size: 16px;">Reset Your Password</a>
+              </div> 
+              
+              <p style="color: #666; font-size: 14px; margin-top: 30px;">If you didn't request a password reset, please ignore this email or contact support if you have concerns.</p>
+              
+              <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eaeaea; text-align: center; color: #666; font-size: 12px;">
+                <p>© 2025 GYM PRO. All rights reserved.</p>
+              </div>
+            </div>
           `,
         };
       
@@ -112,6 +151,6 @@ export class AuthService {
 
     async updateUserPassword(userId: number, newpassword: string) {
         const hashedPassword = await bcrypt.hash(newpassword, 10);
-        await this.userService.updateUser(userId, { mot_de_passe: hashedPassword });
+        await this.userService.updateUser(userId, { password: hashedPassword });
     }
-}   
+}

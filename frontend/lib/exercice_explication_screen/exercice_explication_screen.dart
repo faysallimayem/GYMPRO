@@ -1,20 +1,240 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
-import '../routes/app_routes.dart';
 import '../widgets.dart';
 
-class ExerciceExplicationScreen extends StatelessWidget {
-  const ExerciceExplicationScreen({Key? key})
-      : super(
-          key: key,
-        );
+class ExerciceExplicationScreen extends StatefulWidget {
+  final Map<String, dynamic>? exercise;
+  final List<dynamic>? workoutExercises;
+  final int? currentExerciseIndex;
+  final bool? isWorkoutMode;
+  
+  const ExerciceExplicationScreen({
+    super.key, 
+    this.exercise,
+    this.workoutExercises,
+    this.currentExerciseIndex = 0,
+    this.isWorkoutMode = false
+  });
+
+  @override
+  State<ExerciceExplicationScreen> createState() => _ExerciceExplicationScreenState();
+}
+
+class _ExerciceExplicationScreenState extends State<ExerciceExplicationScreen> {
+  Map<String, dynamic>? exercise;
+  List<dynamic>? workoutExercises;
+  int currentExerciseIndex = 0;
+  int currentSet = 1;
+  int totalSets = 4;
+  bool isWorkoutMode = false;
+  int secondsElapsed = 0;
+  Timer? _timer;
+  double progressValue = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // First, check if we have parameters from constructor
+    if (widget.exercise != null) {
+      exercise = widget.exercise;
+    }
+    
+    if (widget.workoutExercises != null) {
+      workoutExercises = widget.workoutExercises;
+      currentExerciseIndex = widget.currentExerciseIndex ?? 0;
+      isWorkoutMode = widget.isWorkoutMode ?? false;
+      
+      // Ensure exercise is set
+      if (exercise == null && workoutExercises!.isNotEmpty) {
+        exercise = workoutExercises![currentExerciseIndex];
+      }
+      
+      // Calculate progress
+      if (isWorkoutMode && workoutExercises != null && workoutExercises!.isNotEmpty) {
+        progressValue = (currentExerciseIndex + 1) / workoutExercises!.length;
+      }
+    }
+    
+    // If no constructor parameters, try to get from route arguments as fallback
+    if (exercise == null) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      
+      if (args is Map<String, dynamic>) {
+        // Single exercise mode
+        if (args['exercise'] != null) {
+          exercise = args['exercise'];
+        }
+        
+        // Workout mode (multiple exercises)
+        if (args['workoutExercises'] != null) {
+          workoutExercises = args['workoutExercises'];
+          currentExerciseIndex = args['currentExerciseIndex'] ?? 0;
+          isWorkoutMode = args['isWorkoutMode'] ?? false;
+          
+          // Ensure exercise is set
+          if (exercise == null && workoutExercises!.isNotEmpty) {
+            exercise = workoutExercises![currentExerciseIndex];
+          }
+          
+          // Calculate progress
+          if (isWorkoutMode && workoutExercises != null && workoutExercises!.isNotEmpty) {
+            progressValue = (currentExerciseIndex + 1) / workoutExercises!.length;
+          }
+        }
+      } else if (args is Map<String, dynamic>) {
+        // Direct exercise viewing (from search or listing)
+        exercise = args;
+      }
+    }
+    
+    // Set defaults if still null
+    exercise ??= {'name': 'Exercise', 'description': 'No details available'};
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        secondsElapsed++;
+      });
+    });
+  }
+
+  String get formattedTime {
+    final minutes = (secondsElapsed ~/ 60).toString().padLeft(2, '0');
+    final seconds = (secondsElapsed % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  void _nextExercise() {
+    if (!isWorkoutMode || workoutExercises == null || workoutExercises!.isEmpty) {
+      // Simply exit if not in workout mode
+      Navigator.pop(context);
+      return;
+    }
+
+    if (currentSet < totalSets) {
+      // Move to next set of the same exercise
+      setState(() {
+        currentSet++;
+        progressValue = (currentExerciseIndex * totalSets + currentSet) / 
+                       (workoutExercises!.length * totalSets);
+      });
+    } else {
+      // Move to next exercise
+      final nextIndex = currentExerciseIndex + 1;
+      
+      if (nextIndex < workoutExercises!.length) {
+        setState(() {
+          currentExerciseIndex = nextIndex;
+          exercise = workoutExercises![nextIndex];
+          currentSet = 1; // Reset sets for new exercise
+          progressValue = (currentExerciseIndex * totalSets + currentSet) / 
+                         (workoutExercises!.length * totalSets);
+        });
+      } else {
+        // Workout completed
+        _showWorkoutCompleted();
+      }
+    }
+  }
+  
+  void _previousExercise() {
+    if (!isWorkoutMode || workoutExercises == null || workoutExercises!.isEmpty) {
+      // Simply exit if not in workout mode
+      Navigator.pop(context);
+      return;
+    }
+
+    if (currentSet > 1) {
+      // Move to previous set of the same exercise
+      setState(() {
+        currentSet--;
+        progressValue = (currentExerciseIndex * totalSets + currentSet) / 
+                       (workoutExercises!.length * totalSets);
+      });
+    } else {
+      // Move to previous exercise
+      final prevIndex = currentExerciseIndex - 1;
+      
+      if (prevIndex >= 0) {
+        setState(() {
+          currentExerciseIndex = prevIndex;
+          exercise = workoutExercises![prevIndex];
+          currentSet = totalSets; // Go to last set of previous exercise
+          progressValue = (currentExerciseIndex * totalSets + currentSet) / 
+                         (workoutExercises!.length * totalSets);
+        });
+      } else {
+        // Already at first exercise and first set
+        Navigator.pop(context); // Go back to workout details
+      }
+    }
+  }
+  
+  void _endWorkout() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('End Workout'),
+        content: Text('Are you sure you want to end this workout?'),
+        actions: [
+          TextButton(
+            child: Text('Cancel'),
+            onPressed: () => Navigator.pop(context),
+          ),
+          TextButton(
+            child: Text('End Workout', style: TextStyle(color: Colors.red)),
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back to workout details
+            },
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showWorkoutCompleted() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Workout Completed'),
+        content: Text('Congratulations! You have completed your workout.'),
+        actions: [
+          TextButton(
+            child: Text('Close'),
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back to workout details
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final exerciseName = exercise?['name'] ?? 'Exercise';
+    
     return Scaffold(
       backgroundColor: appTheme.whiteA700,
-      appBar: _buildAppbar(context),
+      appBar: _buildAppbar(context, exerciseName),
       body: SafeArea(
         top: false,
         child: SizedBox(
@@ -37,49 +257,54 @@ class ExerciceExplicationScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "Set 2/4",
+                          "Set $currentSet/$totalSets",
                           style: CustomTextStyles.headlineSmallBold,
                         )
                       ],
                     ),
                   ),
                   SizedBox(height: 10.h),
-                  _buildColumn25complet(context),
+                  _buildProgressIndicator(context),
                   SizedBox(height: 68.h),
-                  CustomImageView(
-                    imagePath: ImageConstant.imgFrame1000006648,
-                    height: 190.h,
-                    width: double.maxFinite,
-                    margin: EdgeInsetsDirectional.only(
-                      start: 52.h,
-                      end: 58.h,
+                  _buildExerciseVideo(context),
+                  SizedBox(height: 20.h),
+                  if (exercise?['description'] != null)
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.h),
+                      child: Text(
+                        exercise!['description'],
+                        style: CustomTextStyles.bodyMediumGray60001,
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 110.h),
-                  _buildColumncontrast(context)
+                  SizedBox(height: 50.h),
+                  _buildNavigationControls(context)
                 ],
               ),
             ),
           ),
         ),
       ),
-      bottomNavigationBar: _buildColumnend(context),
+      bottomNavigationBar: _buildEndWorkoutButton(context),
     );
   }
 
   /// Section Widget
-  PreferredSizeWidget _buildAppbar(BuildContext context) {
+  PreferredSizeWidget _buildAppbar(BuildContext context, String title) {
     return CustomAppBar(
       height: 46.h,
       title: Padding(
         padding: EdgeInsetsDirectional.only(start: 16.h),
         child: Row(
           children: [
-            AppbarSubtitleOne(
-              text: "←",
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: AppbarSubtitleOne(
+                text: "←",
+              ),
             ),
             AppbarSubtitle(
-              text: "Bench Press",
+              text: title,
               margin: EdgeInsetsDirectional.only(start: 109.h),
             )
           ],
@@ -87,7 +312,7 @@ class ExerciceExplicationScreen extends StatelessWidget {
       ),
       actions: [
         AppbarSubtitleThree(
-          text: "00:00",
+          text: formattedTime,
           margin: EdgeInsetsDirectional.only(end: 12.h),
         )
       ],
@@ -96,7 +321,9 @@ class ExerciceExplicationScreen extends StatelessWidget {
   }
 
   /// Section Widget
-  Widget _buildColumn25complet(BuildContext context) {
+  Widget _buildProgressIndicator(BuildContext context) {
+    int progressPercent = (progressValue * 100).round();
+    
     return Container(
       width: double.maxFinite,
       margin: EdgeInsetsDirectional.symmetric(horizontal: 10.h),
@@ -125,7 +352,7 @@ class ExerciceExplicationScreen extends StatelessWidget {
                   4.h,
                 ),
                 child: LinearProgressIndicator(
-                  value: 0.21,
+                  value: progressValue,
                   backgroundColor: appTheme.gray100,
                   valueColor: AlwaysStoppedAnimation<Color>(
                     appTheme.orangeA70001,
@@ -135,7 +362,7 @@ class ExerciceExplicationScreen extends StatelessWidget {
             ),
           ),
           Text(
-            "25% completed",
+            "$progressPercent% completed",
             style: CustomTextStyles.bodySmallGray60001_1,
           )
         ],
@@ -144,7 +371,49 @@ class ExerciceExplicationScreen extends StatelessWidget {
   }
 
   /// Section Widget
-  Widget _buildColumncontrast(BuildContext context) {
+  Widget _buildExerciseVideo(BuildContext context) {
+    return Container(
+      margin: EdgeInsetsDirectional.only(
+        start: 52.h,
+        end: 58.h,
+      ),
+      decoration: BoxDecoration(
+        color: appTheme.gray200,
+        borderRadius: BorderRadius.circular(12.h),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CustomImageView(
+            imagePath: ImageConstant.imgFrame1000006648, 
+            height: 190.h,
+            width: double.maxFinite,
+            fit: BoxFit.cover,
+            radius: BorderRadius.circular(12.h),
+          ),
+          Container(
+            height: 50.h,
+            width: 50.h,
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.5),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.play_arrow,
+              color: Colors.white,
+              size: 30.h,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Section Widget
+  Widget _buildNavigationControls(BuildContext context) {
+    // Calculate sets left
+    final setsLeft = totalSets - currentSet;
+    
     return Container(
       width: double.maxFinite,
       padding: EdgeInsetsDirectional.all(12.h),
@@ -191,7 +460,7 @@ class ExerciceExplicationScreen extends StatelessWidget {
                   child: Padding(
                     padding: EdgeInsetsDirectional.only(start: 6.h),
                     child: Text(
-                      "00:45",
+                      formattedTime,
                       style: CustomTextStyles.bodyMediumLight,
                     ),
                   ),
@@ -209,7 +478,7 @@ class ExerciceExplicationScreen extends StatelessWidget {
                   child: Padding(
                     padding: EdgeInsetsDirectional.only(start: 6.h),
                     child: Text(
-                      "3 sets left",
+                      "$setsLeft sets left",
                       style: CustomTextStyles.bodyMediumLight,
                     ),
                   ),
@@ -235,6 +504,7 @@ class ExerciceExplicationScreen extends StatelessWidget {
                     text: "Previous",
                     buttonStyle: CustomButtonStyles.fillGray,
                     buttonTextStyle: CustomTextStyles.titleLargeInterGray60001,
+                    onPressed: _previousExercise,
                   ),
                 ),
                 Expanded(
@@ -252,6 +522,7 @@ class ExerciceExplicationScreen extends StatelessWidget {
                     ),
                     buttonStyle: CustomButtonStyles.fillOrangeA,
                     buttonTextStyle: CustomTextStyles.titleLargeInterWhiteA700,
+                    onPressed: _nextExercise,
                   ),
                 )
               ],
@@ -263,7 +534,7 @@ class ExerciceExplicationScreen extends StatelessWidget {
   }
 
   /// Section Widget
-  Widget _buildColumnend(BuildContext context) {
+  Widget _buildEndWorkoutButton(BuildContext context) {
     return Container(
       width: double.maxFinite,
       padding: EdgeInsetsDirectional.symmetric(horizontal: 12.h),
@@ -285,6 +556,7 @@ class ExerciceExplicationScreen extends StatelessWidget {
             ),
             buttonStyle: CustomButtonStyles.fillDeepOrange,
             buttonTextStyle: CustomTextStyles.titleLargeInterRed500,
+            onPressed: _endWorkout,
           )
         ],
       ),

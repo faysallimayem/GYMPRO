@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
-import '../routes/app_routes.dart';
 import '../widgets.dart';
 
 class CoachProfileScreen extends StatelessWidget {
-  const CoachProfileScreen({Key? key})
-      : super(
-          key: key,
-        );
+  const CoachProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

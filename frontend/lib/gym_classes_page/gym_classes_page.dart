@@ -1,9 +1,10 @@
+// ignore_for_file: depend_on_referenced_packages, use_super_parameters, avoid_unnecessary_containers
+
 import 'package:flutter/material.dart';
-import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
-import '../routes/app_routes.dart';
-import '../widgets.dart'; // ignore_for_file: must_be_immutable
+import '../widgets.dart';
+import 'package:intl/intl.dart';
 
 class GymClassesPage extends StatefulWidget {
   const GymClassesPage({Key? key})
@@ -15,7 +16,6 @@ class GymClassesPage extends StatefulWidget {
   GymClassesPageState createState() => GymClassesPageState();
 }
 
-// ignore_for_file: must_be_immutable
 class GymClassesPageState extends State<GymClassesPage>
     with TickerProviderStateMixin {
   List<DateTime?> selectedDatesFromCalendar = [];
@@ -24,10 +24,24 @@ class GymClassesPageState extends State<GymClassesPage>
 
   int tabIndex = 0;
 
+  int selectedDateIndex = 0;
+
   @override
   void initState() {
     super.initState();
     tabviewController = TabController(length: 4, vsync: this);
+  }
+
+  /// Build the app bar for the gym classes page
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return CustomAppBar(
+      height: 52.h,
+      centerTitle: true, // Center the title
+      title: AppbarSubtitle(
+        text: "classes",
+      ),
+      // Remove the styleType to eliminate the grey line
+    );
   }
 
   @override
@@ -68,71 +82,120 @@ class GymClassesPageState extends State<GymClassesPage>
   }
 
   /// Section Widget
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return CustomAppBar(
-      height: 52.h,
-      title: Padding(
-        padding: EdgeInsetsDirectional.only(start: 16.h),
-        child: Row(
-          children: [
-            AppbarSubtitleOne(
-              text: "←",
-            ),
-            AppbarSubtitle(
-              text: "classes",
-              margin: EdgeInsetsDirectional.only(start: 135.h),
-            )
-          ],
-        ),
-      ),
-      styleType: Style.bgOutlineGray100,
-    );
-  }
-
-  /// Section Widget
   Widget _buildDateSelector(BuildContext context) {
-    return Padding(
-      padding: EdgeInsetsDirectional.only(start: 8.h),
-      child: SingleChildScrollView(
+    // Get the current date
+    final today = DateTime.now();
+    
+    // Create list of dates for the next 7 days
+    final dates = List.generate(
+      7, 
+      (index) => today.add(Duration(days: index))
+    );
+    
+    // Calculate adaptive size based on screen width
+    final screenWidth = MediaQuery.of(context).size.width;
+    final itemWidth = screenWidth < 600 ? 70.0 : (screenWidth < 1200 ? 80.0 : 90.0);
+    final containerHeight = screenWidth < 600 ? 110.0 : (screenWidth < 1200 ? 120.0 : 130.0);
+    
+    return Container(
+      height: containerHeight,
+      padding: EdgeInsets.symmetric(vertical: 10.h),
+      child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        child: IntrinsicWidth(
-          child: SizedBox(
-            height: 100.h,
-            width: 660.h,
-            child: CalendarDatePicker2(
-              config: CalendarDatePicker2Config(
-                calendarType: CalendarDatePicker2Type.single,
-                firstDate: DateTime(DateTime.now().year - 5),
-                lastDate: DateTime(DateTime.now().year + 5),
-                firstDayOfWeek: 0,
+        itemCount: dates.length,
+        padding: EdgeInsets.symmetric(horizontal: 12.h),
+        itemBuilder: (context, index) {
+          final date = dates[index];
+          final dayName = DateFormat('E').format(date); // Short day name
+          final dayNumber = date.day.toString();
+          final monthName = DateFormat('MMM').format(date); // Short month name
+          
+          final isSelected = index == selectedDateIndex;
+          
+          // Calculate text sizes based on screen width
+          final dayNameSize = screenWidth < 600 ? 12.0 : (screenWidth < 1200 ? 14.0 : 16.0);
+          final dayNumberSize = screenWidth < 600 ? 20.0 : (screenWidth < 1200 ? 22.0 : 24.0);
+          final monthNameSize = screenWidth < 600 ? 12.0 : (screenWidth < 1200 ? 14.0 : 16.0);
+          
+          return Container(
+            width: itemWidth,
+            margin: EdgeInsets.symmetric(horizontal: 5.h),
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  selectedDateIndex = index;
+                });
+              },
+              child: AspectRatio(
+                aspectRatio: 1.0, // Keep it circular
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isSelected ? theme.colorScheme.primary : appTheme.gray300,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        dayName,
+                        style: TextStyle(
+                          fontSize: dayNameSize,
+                          fontWeight: FontWeight.w500,
+                          color: isSelected ? appTheme.whiteA700 : appTheme.black900,
+                        ),
+                      ),
+                      SizedBox(height: screenWidth < 600 ? 1.h : 2.h),
+                      Text(
+                        dayNumber,
+                        style: TextStyle(
+                          fontSize: dayNumberSize,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? appTheme.whiteA700 : appTheme.black900,
+                        ),
+                      ),
+                      SizedBox(height: screenWidth < 600 ? 1.h : 2.h),
+                      Text(
+                        monthName,
+                        style: TextStyle(
+                          fontSize: monthNameSize,
+                          fontWeight: FontWeight.w400,
+                          color: isSelected ? appTheme.whiteA700 : appTheme.black900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              value: selectedDatesFromCalendar,
-              onValueChanged: (dates) {},
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
 
   /// Section Widget
   Widget _buildTabview(BuildContext context) {
+    // Calculate adaptive sizes based on screen width
+    final screenWidth = MediaQuery.of(context).size.width;
+    final fontSize = screenWidth < 600 ? 14.0 : (screenWidth < 1200 ? 16.0 : 18.0);
+    final tabPadding = screenWidth < 600 ? 10.0 : (screenWidth < 1200 ? 14.0 : 18.0);
+    
     return Container(
       width: double.maxFinite,
-      margin: EdgeInsetsDirectional.only(start: 8.h),
+      margin: EdgeInsets.symmetric(horizontal: 8.h),
       child: TabBar(
         controller: tabviewController,
         isScrollable: true,
-        tabAlignment: TabAlignment.start,
+        tabAlignment: TabAlignment.center, // Center the tabs
         labelColor: appTheme.whiteA700,
         labelStyle: TextStyle(
-          fontSize: 16.fSize,
+          fontSize: fontSize,
           fontFamily: 'Inter',
           fontWeight: FontWeight.w400,
         ),
         unselectedLabelColor: appTheme.black900,
         unselectedLabelStyle: TextStyle(
-          fontSize: 16.fSize,
+          fontSize: fontSize,
           fontFamily: 'Inter',
           fontWeight: FontWeight.w400,
         ),
@@ -154,8 +217,8 @@ class GymClassesPageState extends State<GymClassesPage>
                       ),
                     ),
               child: Padding(
-                padding: EdgeInsetsDirectional.symmetric(
-                  horizontal: 14.h,
+                padding: EdgeInsets.symmetric(
+                  horizontal: tabPadding,
                   vertical: 4.h,
                 ),
                 child: Text(
@@ -181,8 +244,8 @@ class GymClassesPageState extends State<GymClassesPage>
                       ),
                     ),
               child: Padding(
-                padding: EdgeInsetsDirectional.symmetric(
-                  horizontal: 14.h,
+                padding: EdgeInsets.symmetric(
+                  horizontal: tabPadding,
                   vertical: 4.h,
                 ),
                 child: Text(
@@ -208,8 +271,8 @@ class GymClassesPageState extends State<GymClassesPage>
                       ),
                     ),
               child: Padding(
-                padding: EdgeInsetsDirectional.symmetric(
-                  horizontal: 14.h,
+                padding: EdgeInsets.symmetric(
+                  horizontal: tabPadding,
                   vertical: 4.h,
                 ),
                 child: Text(
@@ -235,8 +298,8 @@ class GymClassesPageState extends State<GymClassesPage>
                       ),
                     ),
               child: Padding(
-                padding: EdgeInsetsDirectional.symmetric(
-                  horizontal: 14.h,
+                padding: EdgeInsets.symmetric(
+                  horizontal: tabPadding,
                   vertical: 4.h,
                 ),
                 child: Text(
@@ -269,210 +332,90 @@ class ClasslistItemWidget extends StatelessWidget {
       child: Card(
         clipBehavior: Clip.antiAlias,
         elevation: 0,
-        margin: EdgeInsetsDirectional.zero,
+        margin: EdgeInsets.symmetric(horizontal: 8.h),
         color: appTheme.whiteA700,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadiusStyle.roundedBorder8,
         ),
         child: Container(
-          height: 106.h,
+          constraints: BoxConstraints(minHeight: 90.h),
           decoration: AppDecoration.outlineBlack900.copyWith(
             borderRadius: BorderRadiusStyle.roundedBorder8,
           ),
-          child: Stack(
-            alignment: AlignmentDirectional.center,
-            children: [
-              Align(
-                alignment: AlignmentDirectional.topStart,
-                child: Padding(
-                  padding: EdgeInsetsDirectional.only(
-                    start: 16.h,
-                    top: 12.h,
-                  ),
-                  child: Text(
-                    "Spinning",
-                    style: theme.textTheme.titleMedium,
-                  ),
-                ),
-              ),
-              Align(
-                alignment: AlignmentDirectional.topStart,
-                child: Padding(
-                  padding: EdgeInsetsDirectional.only(
-                    start: 16.h,
-                    top: 36.h,
-                  ),
-                  child: Text(
-                    "08:00 - 09:00",
-                    style: CustomTextStyles.bodyMediumGray60001ExtraLight,
-                  ),
-                ),
-              ),
-              Align(
-                alignment: AlignmentDirectional.bottomCenter,
-                child: SizedBox(
-                  width: double.maxFinite,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: double.maxFinite,
-                        child: Align(
-                          alignment: AlignmentDirectional.bottomCenter,
-                          child: Container(
-                            margin: EdgeInsetsDirectional.only(bottom: 10.h),
-                            padding: EdgeInsetsDirectional.symmetric(
-                                horizontal: 12.h),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                CustomImageView(
-                                  imagePath: ImageConstant.imgEllipse3382,
-                                  height: 32.h,
-                                  width: 34.h,
-                                  radius: BorderRadius.circular(
-                                    16.h,
-                                  ),
-                                  margin:
-                                      EdgeInsetsDirectional.only(start: 6.h),
-                                ),
-                                Padding(
-                                  padding:
-                                      EdgeInsetsDirectional.only(start: 10.h),
-                                  child: Text(
-                                    " Emma Wilson",
-                                    style: CustomTextStyles.bodySmallExtraLight,
-                                  ),
-                                ),
-                                Spacer(),
-                                _buildBookButtonSpinning(context)
-                              ],
-                            ),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-              ),
-              Align(
-                alignment: AlignmentDirectional.topCenter,
-                child: Container(
-                  width: double.maxFinite,
-                  margin: EdgeInsetsDirectional.only(
-                    start: 6.h,
-                    top: 12.h,
-                    end: 6.h,
-                  ),
-                  child: Column(
-                    spacing: 4,
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "12 spots left",
-                        style: CustomTextStyles.bodySmallGreen600,
-                      ),
-                      Padding(
-                        padding: EdgeInsetsDirectional.only(end: 16.h),
-                        child: Text(
-                          "45 min",
-                          style: CustomTextStyles.bodySmallGray60001,
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-              ),
-              Container(
-                width: double.maxFinite,
-                padding: EdgeInsetsDirectional.symmetric(
-                  horizontal: 6.h,
-                  vertical: 10.h,
-                ),
-                decoration: AppDecoration.outlineBlack900.copyWith(
-                  borderRadius: BorderRadiusStyle.roundedBorder8,
-                ),
-                child: Column(
-                  spacing: 8,
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
+          child: Padding(
+            padding: EdgeInsets.all(12.h),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 2.h),
-                    Container(
-                      width: double.maxFinite,
-                      margin: EdgeInsetsDirectional.only(start: 14.h),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Spinning",
-                                  style: theme.textTheme.titleMedium,
-                                ),
-                                Text(
-                                  "08:00 - 09:00",
-                                  style: CustomTextStyles
-                                      .bodyMediumGray60001ExtraLight,
-                                )
-                              ],
-                            ),
+                          Text(
+                            "Spinning",
+                            style: theme.textTheme.titleMedium,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          Column(
-                            spacing: 4,
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "12 spots left",
-                                style: CustomTextStyles.bodySmallGreen600,
-                              ),
-                              Text(
-                                "45 min",
-                                style: CustomTextStyles.bodySmallGray60001,
-                              )
-                            ],
+                          SizedBox(height: 4.h),
+                          Text(
+                            "08:00 - 09:00",
+                            style: CustomTextStyles.bodyMediumGray60001ExtraLight,
+                            overflow: TextOverflow.ellipsis,
                           )
                         ],
                       ),
                     ),
-                    Container(
-                      width: double.maxFinite,
-                      margin: EdgeInsetsDirectional.only(
-                        start: 10.h,
-                        end: 4.h,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CustomImageView(
-                            imagePath: ImageConstant.imgEllipse3382,
-                            height: 32.h,
-                            width: 34.h,
-                            radius: BorderRadius.circular(
-                              16.h,
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.only(start: 12.h),
-                            child: Text(
-                              " Emma Wilson",
-                              style: CustomTextStyles.bodySmallExtraLight,
-                            ),
-                          ),
-                          Spacer(),
-                          _buildBookButtonYoga(context)
-                        ],
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "12 spots left",
+                          style: CustomTextStyles.bodySmallGreen600,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          "45 min",
+                          style: CustomTextStyles.bodySmallGray60001,
+                          overflow: TextOverflow.ellipsis,
+                        )
+                      ],
                     )
                   ],
                 ),
-              )
-            ],
+                SizedBox(height: 12.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          CustomImageView(
+                            imagePath: ImageConstant.imgEllipse3382,
+                            height: 30.h,
+                            width: 30.h,
+                            radius: BorderRadius.circular(15.h),
+                          ),
+                          SizedBox(width: 10.h),
+                          Expanded(
+                            child: Text(
+                              "Emma Wilson",
+                              style: CustomTextStyles.bodySmallExtraLight,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildBookButton(context)
+                  ],
+                )
+              ],
+            ),
           ),
         ),
       ),
@@ -480,18 +423,7 @@ class ClasslistItemWidget extends StatelessWidget {
   }
 
   /// Section Widget
-  Widget _buildBookButtonSpinning(BuildContext context) {
-    return CustomElevatedButton(
-      height: 30.h,
-      width: 64.h,
-      text: "Book",
-      buttonStyle: CustomButtonStyles.fillDeepOrangeTL6,
-      buttonTextStyle: CustomTextStyles.titleSmallInterWhiteA700,
-    );
-  }
-
-  /// Section Widget
-  Widget _buildBookButtonYoga(BuildContext context) {
+  Widget _buildBookButton(BuildContext context) {
     return CustomElevatedButton(
       height: 30.h,
       width: 64.h,
@@ -515,61 +447,36 @@ class GymclassesallTabPage extends StatefulWidget {
 class GymclassesallTabPageState extends State<GymclassesallTabPage> {
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final horizontalPadding = screenWidth < 600 ? 8.0 : (screenWidth < 1200 ? 12.0 : 16.0);
+    
     return Container(
-      padding: EdgeInsetsDirectional.symmetric(
-        horizontal: 8.h,
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
         vertical: 12.h,
       ),
-      child: Column(
-        children: [
-          Expanded(
-            child: SizedBox(
-              width: double.maxFinite,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildClassList(context),
-                  VerticalDivider(
-                    width: 5.h,
-                    thickness: 5.h,
-                    color: theme.colorScheme.onPrimaryContainer,
-                  )
-                ],
-              ),
-            ),
-          )
-        ],
-      ),
+      child: _buildClassList(context),
     );
   }
 
   /// Section Widget
   Widget _buildClassList(BuildContext context) {
-    return Expanded(
-      child: Align(
-        alignment: AlignmentDirectional.center,
-        child: Padding(
-          padding: EdgeInsetsDirectional.only(
-            start: 32.h,
-            top: 24.h,
-          ),
-          child: ListView.separated(
-            padding: EdgeInsetsDirectional.zero,
-            physics: BouncingScrollPhysics(),
-            shrinkWrap: true,
-            separatorBuilder: (context, index) {
-              return SizedBox(
-                height: 12.h,
-              );
-            },
-            itemCount: 7,
-            itemBuilder: (context, index) {
-              return ClasslistItemWidget();
-            },
-          ),
-        ),
-      ),
+    final screenWidth = MediaQuery.of(context).size.width;
+    final topPadding = screenWidth < 600 ? 16.0 : 24.0;
+    
+    return ListView.separated(
+      padding: EdgeInsets.only(top: topPadding),
+      physics: BouncingScrollPhysics(),
+      shrinkWrap: true,
+      separatorBuilder: (context, index) {
+        return SizedBox(
+          height: 12.h,
+        );
+      },
+      itemCount: 7,
+      itemBuilder: (context, index) {
+        return ClasslistItemWidget();
+      },
     );
   }
 }

@@ -14,16 +14,21 @@ import '../edit_user_profile_screen/edit_user_profile_screen.dart';
 import '../edit_user_screen/edit_user_screen.dart';
 import '../exercice_explication_screen/exercice_explication_screen.dart';
 import '../exercice_managment_screen/exercice_managment_screen.dart';
+import '../favorite_exercises_screen/favorite_exercises_screen.dart';
 import '../forgot_password_screen/forgot_password_screen.dart';
 import '../gender_screen/gender_screen.dart';
 import '../get_started_screen/get_started_screen.dart';
+import '../workout_details_screen/workout_details_screen.dart';
 import '../height_screen/height_screen.dart';
 import '../home_screen/home_screen.dart';
 import '../nutrition_management_screen/nutrition_management_screen.dart';
+import '../nutrition_screen/nutrition_screen.dart';
+import '../reset_password_screen/reset_password_screen.dart';
 import '../sign_up_screen/sign_up_screen.dart';
 import '../user_managment_screen/user_managment_screen.dart';
 import '../weight_screen/weight_screen.dart';
-import '../workout_details_screen/workout_details_screen.dart';
+import '../nutrition_calculator_screen/nutrition_calculator_screen.dart';
+import '../meal_creation_screen/meal_creation_screen.dart';
 
 // ignore_for_file: must_be_immutable
 class AppRoutes {
@@ -34,6 +39,8 @@ class AppRoutes {
   static const String signUpScreen = '/sign_up_screen';
 
   static const String forgotPasswordScreen = '/forgot_password_screen';
+  
+  static const String resetPasswordScreen = '/reset_password_screen';
 
   static const String genderScreen = '/gender_screen';
 
@@ -59,12 +66,17 @@ class AppRoutes {
 
   static const String editUserOneScreen = '/edit_user_one_screen';
 
-  static const String nutritionManagementScreen =
-      '/nutrition_management_screen';
+  static const String nutritionManagementScreen ='/nutrition_management_screen';
+
+  static const String nutritionScreen = '/nutrition_screen';
 
   static const String addNutritionScreen = '/add_nutrition_screen';
 
   static const String editNutritionScreen = '/edit_nutrition_screen';
+  
+  static const String nutritionCalculatorScreen = '/nutrition_calculator_screen';
+  
+  static const String mealCreationScreen = '/meal_creation_screen';
 
   static const String exerciceManagmentScreen = '/exercice_managment_screen';
 
@@ -75,9 +87,8 @@ class AppRoutes {
   static const String chatScreen = '/chat_screen';
 
   static const String workoutDetailsScreen = '/workout_details_screen';
-
-  static const String exerciceExplicationScreen =
-      '/exercice_explication_screen';
+  
+  static const String exerciceExplicationScreen ='/exercice_explication_screen';
 
   static const String gymClassesPage = '/gym_classes_page';
 
@@ -89,6 +100,8 @@ class AppRoutes {
 
   static const String editUserProfileScreen = '/edit_user_profile_screen';
 
+  static const String favoriteExercisesScreen = '/favorite_exercises_screen';
+
   static const String initialRoute = '/initialRoute';
 
   static Map<String, WidgetBuilder> routes = {
@@ -96,6 +109,7 @@ class AppRoutes {
     authenticationScreen: (context) => AuthenticationScreen(),
     signUpScreen: (context) => SignUpScreen(),
     forgotPasswordScreen: (context) => ForgotPasswordScreen(),
+    resetPasswordScreen: (context) => ResetPasswordScreen(),
     genderScreen: (context) => GenderScreen(),
     ageScreen: (context) => AgeScreen(),
     weightScreen: (context) => WeightScreen(),
@@ -107,8 +121,11 @@ class AppRoutes {
     editUserScreen: (context) => EditUserScreen(),
     editUserOneScreen: (context) => EditUserOneScreen(),
     nutritionManagementScreen: (context) => NutritionManagementScreen(),
+    nutritionScreen: (context) => NutritionScreen(),
     addNutritionScreen: (context) => AddNutritionScreen(),
     editNutritionScreen: (context) => EditNutritionScreen(),
+    nutritionCalculatorScreen: (context) => NutritionCalculatorScreen(),
+    mealCreationScreen: (context) => MealCreationScreen(),
     exerciceManagmentScreen: (context) => ExerciceManagmentScreen(),
     addExerciseScreen: (context) => AddExerciseScreen(),
     addExerciseOneScreen: (context) => AddExerciseOneScreen(),
@@ -117,6 +134,7 @@ class AppRoutes {
     exerciceExplicationScreen: (context) => ExerciceExplicationScreen(),
     coachProfileScreen: (context) => CoachProfileScreen(),
     editUserProfileScreen: (context) => EditUserProfileScreen(),
-    initialRoute: (context) => GetStartedScreen(),
+    favoriteExercisesScreen: (context) => FavoriteExercisesScreen(),
+    initialRoute: (context) =>GetStartedScreen()
   };
 }

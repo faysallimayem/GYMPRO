@@ -4,15 +4,11 @@ import '../app_theme.dart';
 import '../app_utils.dart';
 import '../routes/app_routes.dart';
 import '../widgets.dart';
-import '../services/auth_service.dart';
 import '../services/registration_provider.dart';
 
 // ignore_for_file: must_be_immutable
 class SignUpScreen extends StatefulWidget {
-  SignUpScreen({Key? key})
-      : super(
-          key: key,
-        );
+  const SignUpScreen({super.key});
 
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
@@ -43,6 +39,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions for responsive layout
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final horizontalPadding = screenWidth < 600 ? 24.h : 42.h;
+    
     return Scaffold(
       backgroundColor: appTheme.whiteA700,
       appBar: _buildAppBar(context),
@@ -56,9 +57,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
               child: Container(
                 width: double.maxFinite,
                 padding: EdgeInsetsDirectional.only(
-                  start: 42.h,
-                  top: 32.h,
-                  end: 42.h,
+                  start: horizontalPadding,
+                  top: 24.h,
+                  end: horizontalPadding,
+                  bottom: 20.h, // Add bottom padding
                 ),
                 child: Column(
                   children: [
@@ -123,6 +125,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       height: 46.h,
                       width: 216.h,
                       text: _isLoading ? "Creating account..." : "Continue",
+                      buttonStyle: CustomButtonStyles.fillOrangeA,
                       buttonTextStyle:
                           CustomTextStyles.headlineSmallPoppinsWhiteA700,
                       onPressed: _isLoading ? null : _handleSignUp,
@@ -152,10 +155,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
       // Store user data in registration provider
       final registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
       registrationProvider.setBasicInfo(
-        nom: firstNameController.text.trim(),
-        prenom: namesevenController.text.trim(),
+        lastName: firstNameController.text.trim(),
+        firstName: namesevenController.text.trim(),
         email: emailController.text.trim(),
-        motDePasse: passwordController.text,
+        password: passwordController.text,
       );
       
       // Navigate to gender screen to continue registration flow

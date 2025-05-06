@@ -8,7 +8,7 @@ export class Nutrition {
   @Column()
   name: string;
 
-  @Column()
+  @Column('float')
   protein: number; 
 
   @Column('float')
@@ -22,4 +22,7 @@ export class Nutrition {
 
   @Column({ nullable: true })
   imageUrl: string;
+
+  @Column({ default: 'Other' })
+  category: string;
 }

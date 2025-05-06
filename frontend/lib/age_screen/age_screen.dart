@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../app_theme.dart';
-import '../app_utils.dart';
 import '../responsive_utils.dart';
 import '../routes/app_routes.dart';
 import '../widgets.dart';
 import '../services/registration_provider.dart';
 
 class AgeScreen extends StatefulWidget {
-  const AgeScreen({Key? key}) : super(key: key);
+  const AgeScreen({super.key});
 
   @override
   State<AgeScreen> createState() => _AgeScreenState();
@@ -51,7 +50,7 @@ class _AgeScreenState extends State<AgeScreen> {
       appBar: _buildAppBar(context),
       body: SafeArea(
         top: false,
-        child: Container(
+        child: SizedBox(
           width: double.maxFinite,
           child: ResponsiveLayout(
             // Mobile layout
@@ -80,7 +79,7 @@ class _AgeScreenState extends State<AgeScreen> {
                       children: [
                         _buildAgeDisplay(context),
                         SizedBox(height: context.heightRatio(0.02)),
-                        Container(
+                        SizedBox(
                           width: context.widthRatio(0.7),
                           child: _buildHorizontalAgeSelector(context),
                         ),
@@ -111,7 +110,7 @@ class _AgeScreenState extends State<AgeScreen> {
                     children: [
                       _buildAgeDisplay(context),
                       SizedBox(height: context.heightRatio(0.02)),
-                      Container(
+                      SizedBox(
                         width: context.widthRatio(0.5),
                         child: _buildHorizontalAgeSelector(context),
                       ),
@@ -265,7 +264,7 @@ class _AgeScreenState extends State<AgeScreen> {
       text: "Continue",
       buttonTextStyle: TextStyle(
         fontSize: context.responsiveFontSize(18),
-        color: Colors.white,
+        color: Color(0xFFFF7900),
         fontWeight: FontWeight.bold,
         fontFamily: CustomTextStyles.headlineSmallPoppinsWhiteA700.fontFamily,
       ),

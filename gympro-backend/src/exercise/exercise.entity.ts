@@ -14,12 +14,15 @@ export class Exercise {
     @Column()
     muscleGroup: string;
 
-    @Column({default: 'beginner'})
-    difficulty: 'beginner' | 'intermediate' | 'advanced';
-
     @Column({ nullable: true })
     videoUrl: string; 
-     
     
+    @Column({ default: 3 })
+    defaultSets: number;
     
+    @Column({ default: 12 })
+    defaultReps: number;
+    
+    @Column({ nullable: true })
+    imageUrl: string;
 }

@@ -5,11 +5,11 @@ import { Role } from 'src/user/role.enum';
 export class SignupDto {
   @ApiProperty({ example: 'Doe' })
   @IsString()
-  nom: string;
+  lastName: string;
 
   @ApiProperty({ example: 'John' })
   @IsString()
-  prenom: string;
+  firstName: string;
 
   @ApiProperty({ example: 'john.doe@example.com' })
   @IsEmail()
@@ -17,7 +17,7 @@ export class SignupDto {
 
   @ApiProperty({ example: 'secure123' })
   @MinLength(6)
-  mot_de_passe: string;
+  password: string;
 
   @ApiProperty({ example: 25 })
   @IsNumber()
@@ -28,16 +28,16 @@ export class SignupDto {
   @ApiProperty({ example: 180, required: false })
   @IsOptional()
   @IsNumber()
-  hauteur?: number;
+  height?: number;
 
   @ApiProperty({ example: 75, required: false })
   @IsOptional()
   @IsNumber()
-  poids?: number;
+  weight?: number;
 
-  @ApiProperty({ example: 'Homme' })
+  @ApiProperty({ example: 'Male' })
   @IsString()
-  sexe: string;
+  gender: string;
 
   @ApiProperty({ example: Role.CLIENT, enum: Role, default: Role.CLIENT })
   @IsEnum(Role)

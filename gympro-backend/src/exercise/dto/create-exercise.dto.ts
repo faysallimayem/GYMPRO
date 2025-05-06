@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsIn, IsUrl } from 'class-validator';
+import { IsString, IsOptional, IsUrl } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateExerciseDto {
@@ -17,14 +17,6 @@ export class CreateExerciseDto {
   @ApiProperty({ example: 'chest', description: 'Target muscle group' })
   @IsString()
   muscleGroup: string;
-
-  @ApiProperty({ 
-    example: 'beginner',
-    enum: ['beginner', 'intermediate', 'advanced'],
-    default: 'beginner'
-  })
-  @IsIn(['beginner', 'intermediate', 'advanced'])
-  difficulty?: 'beginner' | 'intermediate' | 'advanced';
 
   @ApiProperty({ 
     example: 'https://example.com/pushup-video.mp4',

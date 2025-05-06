@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import
+
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
@@ -6,10 +8,7 @@ import '../widgets.dart';
 
 // ignore_for_file: must_be_immutable
 class NutritionManagementScreen extends StatelessWidget {
-  NutritionManagementScreen({Key? key})
-      : super(
-          key: key,
-        );
+  NutritionManagementScreen({super.key});
 
   TextEditingController searchController = TextEditingController();
 
@@ -1016,7 +1015,7 @@ class NutritionManagementScreen extends StatelessWidget {
                               ),
                             ),
                             Expanded(
-                              child: Container(
+                              child: SizedBox(
                                 height: 128.h,
                                 child: Stack(
                                   alignment: AlignmentDirectional.bottomEnd,

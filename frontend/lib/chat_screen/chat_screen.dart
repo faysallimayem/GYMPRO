@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import 'package:flutter_chat_ui/flutter_chat_ui.dart' as chatLib;
+import 'package:flutter_chat_ui/flutter_chat_ui.dart' as chat_lib;
 import '../app_theme.dart';
 import '../app_utils.dart';
-import '../routes/app_routes.dart';
 import '../widgets.dart';
 
 // ignore_for_file: must_be_immutable
 class ChatScreen extends StatelessWidget {
-  ChatScreen({Key? key})
-      : super(
-          key: key,
-        );
+  ChatScreen({super.key});
 
   types.User chatUser = types.User(id: 'RECEIVER_USER');
 
@@ -74,7 +70,7 @@ class ChatScreen extends StatelessWidget {
                       Expanded(
                         child: SizedBox(
                           width: double.maxFinite,
-                          child: chatLib.Chat(
+                          child: chat_lib.Chat(
                             showUserNames: false,
                             disableImageGallery: false,
                             dateHeaderThreshold: 86400000,

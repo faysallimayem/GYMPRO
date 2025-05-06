@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -30,11 +32,11 @@ extension IconButtonStyleHelper on CustomIconButton {
 
 extension ImageTypeExtension on String {
   ImageType get imageType {
-    if (this.startsWith('http') || this.startsWith('https')) {
+    if (startsWith('http') || startsWith('https')) {
       return ImageType.network;
-    } else if (this.endsWith('.svg')) {
+    } else if (endsWith('.svg')) {
       return ImageType.svg;
-    } else if (this.startsWith('file://')) {
+    } else if (startsWith('file://')) {
       return ImageType.file;
     } else {
       return ImageType.png;
@@ -87,8 +89,8 @@ enum BottomBarEnum {
 }
 
 class BaseButton extends StatelessWidget {
-  BaseButton(
-      {Key? key,
+  const BaseButton(
+      {super.key,
       required this.text,
       this.onPressed,
       this.buttonStyle,
@@ -97,10 +99,7 @@ class BaseButton extends StatelessWidget {
       this.height,
       this.width,
       this.margin,
-      this.alignment})
-      : super(
-          key: key,
-        );
+      this.alignment});
 
   final String text;
 
@@ -222,8 +221,8 @@ class CustomButtonStyles {
 }
 
 class CustomDropDown extends StatelessWidget {
-  CustomDropDown(
-      {Key? key,
+  const CustomDropDown(
+      {super.key,
       this.alignment,
       this.width,
       this.boxDecoration,
@@ -242,10 +241,7 @@ class CustomDropDown extends StatelessWidget {
       this.fillColor,
       this.filled = false,
       this.validator,
-      this.onChanged})
-      : super(
-          key: key,
-        );
+      this.onChanged});
 
   final AlignmentGeometry? alignment;
 
@@ -356,31 +352,20 @@ class CustomDropDown extends StatelessWidget {
 }
 
 class CustomElevatedButton extends BaseButton {
-  CustomElevatedButton(
-      {Key? key,
+  const CustomElevatedButton(
+      {super.key,
       this.decoration,
       this.leftIcon,
       this.rightIcon,
-      EdgeInsetsGeometry? margin,
-      VoidCallback? onPressed,
-      ButtonStyle? buttonStyle,
-      AlignmentGeometry? alignment,
-      TextStyle? buttonTextStyle,
-      bool? isDisabled,
-      double? height,
-      double? width,
-      required String text})
-      : super(
-          text: text,
-          onPressed: onPressed,
-          buttonStyle: buttonStyle,
-          isDisabled: isDisabled,
-          buttonTextStyle: buttonTextStyle,
-          height: height,
-          width: width,
-          alignment: alignment,
-          margin: margin,
-        );
+      super.margin,
+      super.onPressed,
+      super.buttonStyle,
+      super.alignment,
+      super.buttonTextStyle,
+      super.isDisabled,
+      super.height,
+      super.width,
+      required super.text});
 
   final BoxDecoration? decoration;
 
@@ -398,8 +383,8 @@ class CustomElevatedButton extends BaseButton {
   }
 
   Widget get buildElevatedButtonWidget => Container(
-        height: this.height ?? 20.h,
-        width: this.width ?? double.maxFinite,
+        height: height ?? 20.h,
+        width: width ?? double.maxFinite,
         margin: margin,
         decoration: decoration,
         child: ElevatedButton(
@@ -422,18 +407,15 @@ class CustomElevatedButton extends BaseButton {
 }
 
 class CustomIconButton extends StatelessWidget {
-  CustomIconButton(
-      {Key? key,
+  const CustomIconButton(
+      {super.key,
       this.alignment,
       this.height,
       this.width,
       this.decoration,
       this.padding,
       this.onTap,
-      this.child})
-      : super(
-          key: key,
-        );
+      this.child});
 
   final AlignmentGeometry? alignment;
 
@@ -477,8 +459,9 @@ class CustomIconButton extends StatelessWidget {
 }
 
 class CustomImageView extends StatelessWidget {
-  CustomImageView(
-      {this.imagePath,
+  const CustomImageView(
+      {super.key,
+      this.imagePath,
       this.height,
       this.width,
       this.color,
@@ -559,94 +542,101 @@ class CustomImageView extends StatelessWidget {
 
   Widget _buildImageView() {
     if (imagePath != null) {
-      switch (imagePath!.imageType) {
-        case ImageType.svg:
-          return Container(
-            height: height,
-            width: width,
-            child: SvgPicture.asset(
-              imagePath!,
+      try {
+        switch (imagePath!.imageType) {
+          case ImageType.svg:
+            return SizedBox(
               height: height,
               width: width,
-              fit: fit ?? BoxFit.contain,
-              colorFilter: this.color != null
-                  ? ColorFilter.mode(
-                      this.color ?? Colors.transparent, BlendMode.srcIn)
-                  : null,
-            ),
-          );
-        case ImageType.file:
-          return Image.file(
-            File(imagePath!),
-            height: height,
-            width: width,
-            fit: fit ?? BoxFit.cover,
-            color: color,
-          );
-        case ImageType.network:
-          return CachedNetworkImage(
-            height: height,
-            width: width,
-            fit: fit,
-            imageUrl: imagePath!,
-            color: color,
-            placeholder: (context, url) => Container(
-              height: 30,
-              width: 30,
-              child: LinearProgressIndicator(
-                color: Colors.grey.shade200,
-                backgroundColor: Colors.grey.shade100,
+              child: SvgPicture.asset(
+                imagePath!,
+                height: height,
+                width: width,
+                fit: fit ?? BoxFit.contain,
+                placeholderBuilder: (context) => _buildPlaceholder(),
+                colorFilter: color != null
+                    ? ColorFilter.mode(
+                        color ?? Colors.transparent, BlendMode.srcIn)
+                    : null,
               ),
-            ),
-            errorWidget: (context, url, error) => Image.asset(
-              placeHolder,
+            );
+          case ImageType.file:
+            return Image.file(
+              File(imagePath!),
               height: height,
               width: width,
               fit: fit ?? BoxFit.cover,
-            ),
-          );
-        case ImageType.png:
-        default:
-          return Image.asset(
-            imagePath!,
-            height: height,
-            width: width,
-            fit: fit ?? BoxFit.cover,
-            color: color,
-          );
+              color: color,
+              errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+            );
+          case ImageType.network:
+            return CachedNetworkImage(
+              height: height,
+              width: width,
+              fit: fit,
+              imageUrl: imagePath!,
+              color: color,
+              placeholder: (context, url) => SizedBox(
+                height: 30,
+                width: 30,
+                child: LinearProgressIndicator(
+                  color: Colors.grey.shade200,
+                  backgroundColor: Colors.grey.shade100,
+                ),
+              ),
+              errorWidget: (context, url, error) => _buildPlaceholder(),
+            );
+          case ImageType.png:
+          default:
+            return Image.asset(
+              imagePath!,
+              height: height,
+              width: width,
+              fit: fit ?? BoxFit.cover,
+              color: color,
+              errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+            );
+        }
+      } catch (e) {
+        return _buildPlaceholder();
       }
     }
-    return SizedBox();
+    return _buildPlaceholder();
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      height: height,
+      width: width,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: radius,
+      ),
+      child: Icon(
+        Icons.image,
+        color: Colors.grey.shade400,
+        size: (height ?? 24) / 2,
+      ),
+    );
   }
 }
 
 class CustomOutlinedButton extends BaseButton {
-  CustomOutlinedButton(
-      {Key? key,
+  const CustomOutlinedButton(
+      {super.key,
       this.decoration,
       this.leftIcon,
       this.rightIcon,
       this.label,
-      VoidCallback? onPressed,
-      ButtonStyle? buttonStyle,
-      TextStyle? buttonTextStyle,
-      bool? isDisabled,
-      AlignmentGeometry? alignment,
-      double? height,
-      double? width,
-      EdgeInsetsGeometry? margin,
-      required String text})
-      : super(
-          text: text,
-          onPressed: onPressed,
-          buttonStyle: buttonStyle,
-          isDisabled: isDisabled,
-          buttonTextStyle: buttonTextStyle,
-          height: height,
-          alignment: alignment,
-          width: width,
-          margin: margin,
-        );
+      super.onPressed,
+      super.buttonStyle,
+      super.buttonTextStyle,
+      super.isDisabled,
+      super.alignment,
+      super.height,
+      super.width,
+      super.margin,
+      required super.text});
 
   final BoxDecoration? decoration;
 
@@ -666,8 +656,8 @@ class CustomOutlinedButton extends BaseButton {
   }
 
   Widget get buildOutlinedButtonWidget => Container(
-        height: this.height ?? 20.h,
-        width: this.width ?? double.maxFinite,
+        height: height ?? 20.h,
+        width: width ?? double.maxFinite,
         margin: margin,
         decoration: decoration ?? CustomButtonStyles.outlineDecoration,
         child: OutlinedButton(
@@ -690,8 +680,8 @@ class CustomOutlinedButton extends BaseButton {
 }
 
 class CustomSearchView extends StatelessWidget {
-  CustomSearchView(
-      {Key? key,
+  const CustomSearchView(
+      {super.key,
       this.alignment,
       this.width,
       this.boxDecoration,
@@ -713,10 +703,7 @@ class CustomSearchView extends StatelessWidget {
       this.fillColor,
       this.filled = true,
       this.validator,
-      this.onChanged})
-      : super(
-          key: key,
-        );
+      this.onChanged});
 
   final AlignmentGeometry? alignment;
 
@@ -854,8 +841,8 @@ class CustomSearchView extends StatelessWidget {
 }
 
 class CustomTextFormField extends StatelessWidget {
-  CustomTextFormField(
-      {Key? key,
+  const CustomTextFormField(
+      {super.key,
       this.alignment,
       this.width,
       this.boxDecoration,
@@ -880,10 +867,7 @@ class CustomTextFormField extends StatelessWidget {
       this.borderDecoration,
       this.fillColor,
       this.filled = true,
-      this.validator})
-      : super(
-          key: key,
-        );
+      this.validator});
 
   final AlignmentGeometry? alignment;
 
@@ -1012,16 +996,13 @@ class CustomTextFormField extends StatelessWidget {
 }
 
 class AppbarLeadingImage extends StatelessWidget {
-  AppbarLeadingImage(
-      {Key? key,
+  const AppbarLeadingImage(
+      {super.key,
       this.imagePath,
       this.height,
       this.width,
       this.onTap,
-      this.margin})
-      : super(
-          key: key,
-        );
+      this.margin});
 
   final double? height;
 
@@ -1053,10 +1034,7 @@ class AppbarLeadingImage extends StatelessWidget {
 }
 
 class AppbarSubtitle extends StatelessWidget {
-  AppbarSubtitle({Key? key, required this.text, this.onTap, this.margin})
-      : super(
-          key: key,
-        );
+  const AppbarSubtitle({super.key, required this.text, this.onTap, this.margin});
 
   final String text;
 
@@ -1084,10 +1062,7 @@ class AppbarSubtitle extends StatelessWidget {
 }
 
 class AppbarSubtitleFour extends StatelessWidget {
-  AppbarSubtitleFour({Key? key, required this.text, this.onTap, this.margin})
-      : super(
-          key: key,
-        );
+  const AppbarSubtitleFour({super.key, required this.text, this.onTap, this.margin});
 
   final String text;
 
@@ -1115,10 +1090,7 @@ class AppbarSubtitleFour extends StatelessWidget {
 }
 
 class AppbarSubtitleOne extends StatelessWidget {
-  AppbarSubtitleOne({Key? key, required this.text, this.onTap, this.margin})
-      : super(
-          key: key,
-        );
+  const AppbarSubtitleOne({super.key, required this.text, this.onTap, this.margin});
 
   final String text;
 
@@ -1146,10 +1118,7 @@ class AppbarSubtitleOne extends StatelessWidget {
 }
 
 class AppbarSubtitleThree extends StatelessWidget {
-  AppbarSubtitleThree({Key? key, required this.text, this.onTap, this.margin})
-      : super(
-          key: key,
-        );
+  const AppbarSubtitleThree({super.key, required this.text, this.onTap, this.margin});
 
   final String text;
 
@@ -1177,10 +1146,7 @@ class AppbarSubtitleThree extends StatelessWidget {
 }
 
 class AppbarSubtitleTwo extends StatelessWidget {
-  AppbarSubtitleTwo({Key? key, required this.text, this.onTap, this.margin})
-      : super(
-          key: key,
-        );
+  const AppbarSubtitleTwo({super.key, required this.text, this.onTap, this.margin});
 
   final String text;
 
@@ -1208,10 +1174,7 @@ class AppbarSubtitleTwo extends StatelessWidget {
 }
 
 class AppbarTitle extends StatelessWidget {
-  AppbarTitle({Key? key, required this.text, this.onTap, this.margin})
-      : super(
-          key: key,
-        );
+  const AppbarTitle({super.key, required this.text, this.onTap, this.margin});
 
   final String text;
 
@@ -1239,8 +1202,8 @@ class AppbarTitle extends StatelessWidget {
 }
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  CustomAppBar(
-      {Key? key,
+  const CustomAppBar(
+      {super.key,
       this.height,
       this.shape,
       this.styleType,
@@ -1248,10 +1211,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       this.leading,
       this.title,
       this.centerTitle,
-      this.actions})
-      : super(
-          key: key,
-        );
+      this.actions});
 
   final double? height;
 
@@ -1323,15 +1283,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
 // ignore_for_file: must_be_immutable
 class CustomBottomBar extends StatefulWidget {
-  CustomBottomBar({this.onChanged});
+  const CustomBottomBar({super.key, this.onChanged});
 
-  Function(BottomBarEnum)? onChanged;
+  final Function(BottomBarEnum)? onChanged;
 
   @override
   CustomBottomBarState createState() => CustomBottomBarState();
 }
 
-// ignore_for_file: must_be_immutable
 class CustomBottomBarState extends State<CustomBottomBar> {
   int selectedIndex = 0;
 
@@ -1406,7 +1365,6 @@ class CustomBottomBarState extends State<CustomBottomBar> {
   }
 }
 
-// ignore_for_file: must_be_immutable
 class BottomMenuModel {
   BottomMenuModel(
       {required this.icon, required this.activeIcon, required this.type});
@@ -1419,6 +1377,8 @@ class BottomMenuModel {
 }
 
 class DefaultWidget extends StatelessWidget {
+  const DefaultWidget({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Container(

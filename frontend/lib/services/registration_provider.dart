@@ -1,36 +1,34 @@
+// ignore_for_file: non_constant_identifier_names, unnecessary_this
+
 import 'package:flutter/foundation.dart';
 
 class RegistrationProvider extends ChangeNotifier {
-  // Basic user info (from first signup screen)
-  String? nom;
-  String? prenom;
+  String? lastName;   
+  String? firstName; 
   String? email;
-  String? mot_de_passe;
+  String? password;  
+  String? gender;    
+  int? age;          
+  int? height;       
+  int? weight;       
+  String role = 'client';
   
-  // Additional info (from subsequent screens)
-  String? sexe;      // From gender screen
-  int? age;          // From age screen
-  int? hauteur;      // From height screen
-  int? poids;        // From weight screen
-  String role = 'client';  // Changed to lowercase to match backend enum
-  
-  // Set basic info from signup screen
   void setBasicInfo({
-    required String nom,
-    required String prenom,
+    required String lastName,
+    required String firstName,
     required String email,
-    required String motDePasse,
+    required String password,
   }) {
-    this.nom = nom;
-    this.prenom = prenom;
+    this.lastName = lastName;
+    this.firstName = firstName;
     this.email = email;
-    this.mot_de_passe = motDePasse;
+    this.password = password;
     notifyListeners();
   }
   
   // Set gender from gender screen
-  void setGender(String sexe) {
-    this.sexe = sexe;
+  void setGender(String gender) {
+    this.gender = gender;
     notifyListeners();
   }
   
@@ -41,51 +39,51 @@ class RegistrationProvider extends ChangeNotifier {
   }
   
   // Set height from height screen
-  void setHeight(int hauteur) {
-    this.hauteur = hauteur;
+  void setHeight(int height) {
+    this.height = height;
     notifyListeners();
   }
   
   // Set weight from weight screen
-  void setWeight(int poids) {
-    this.poids = poids;
+  void setWeight(int weight) {
+    this.weight = weight;
     notifyListeners();
   }
   
   // Check if all required data is available
   bool get isRegistrationComplete => 
-    nom != null && 
-    prenom != null && 
+    lastName != null && 
+    firstName != null && 
     email != null && 
-    mot_de_passe != null && 
-    sexe != null && 
+    password != null && 
+    gender != null && 
     age != null;
   
   // Get complete user data for API
   Map<String, dynamic> getCompleteUserData() {
     return {
-      'nom': nom,
-      'prenom': prenom,
+      'lastName': lastName,
+      'firstName': firstName,
       'email': email,
-      'mot_de_passe': mot_de_passe,
-      'sexe': sexe,
+      'password': password,
+      'gender': gender,
       'age': age,
-      'hauteur': hauteur,
-      'poids': poids,
+      'height': height,
+      'weight': weight,
       'role': role,
     };
   }
   
   // Reset all data
   void reset() {
-    nom = null;
-    prenom = null;
+    lastName = null;
+    firstName = null;
     email = null;
-    mot_de_passe = null;
-    sexe = null;
+    password = null;
+    gender = null;
     age = null;
-    hauteur = null;
-    poids = null;
+    height = null;
+    weight = null;
     notifyListeners();
   }
 }

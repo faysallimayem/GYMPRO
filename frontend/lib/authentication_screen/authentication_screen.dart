@@ -8,10 +8,7 @@ import '../services/auth_service.dart';
 
 // ignore_for_file: must_be_immutable
 class AuthenticationScreen extends StatefulWidget {
-  AuthenticationScreen({Key? key})
-      : super(
-          key: key,
-        );
+  const AuthenticationScreen({super.key});
 
   @override
   State<AuthenticationScreen> createState() => _AuthenticationScreenState();
@@ -29,95 +26,96 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: appTheme.whiteA700,
-      resizeToAvoidBottomInset: false,
+      // Allow screen to resize when keyboard appears
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: Container(
-          width: double.maxFinite,
-          padding: EdgeInsetsDirectional.only(
-            start: 46.h,
-            top: 80.h,
-            end: 46.h,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              SizedBox(
-                height: 72.h,
-                width: 172.h,
-                child: Stack(
-                  alignment: AlignmentDirectional.bottomCenter,
+        child: SingleChildScrollView(
+          // Make the content scrollable to prevent overflow
+          child: Container(
+            width: double.maxFinite,
+            padding: EdgeInsetsDirectional.only(
+              start: 46.h,
+              top: 40.h, // Reduced top padding
+              end: 46.h,
+              bottom: 20.h, // Added bottom padding
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Use min size to prevent overflow
+              children: [
+                // Updated header section with separate widgets for each text
+                Column(
                   children: [
-                    Align(
-                      alignment: AlignmentDirectional.topStart,
-                      child: Padding(
-                        padding: EdgeInsetsDirectional.only(start: 2.h),
-                        child: Text(
-                          "GYM PRO",
-                          style: theme.textTheme.displaySmall,
-                        ),
+                    Text(
+                      "GYM PRO",
+                      style: theme.textTheme.displaySmall?.copyWith(
+                        color: theme.colorScheme.primary,
                       ),
                     ),
+                    SizedBox(height: 8.h),
                     Text(
                       "Login to your Account",
                       style: CustomTextStyles.bodyLargeBlack900_1,
-                    )
+                    ),
                   ],
                 ),
-              ),
-              SizedBox(height: 72.h),
-              _buildEmailInputSection(context),
-              SizedBox(height: 24.h),
-              _buildPasswordInputSection(context),
-              SizedBox(height: 26.h),
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Padding(
-                  padding: EdgeInsetsDirectional.only(start: 4.h),
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.forgotPasswordScreen);
-                    },
-                    child: Text(
-                      "Forgot Password",
-                      style: CustomTextStyles.titleSmallWorkSansPrimary,
+                SizedBox(height: 50.h), // Reduced spacing
+                _buildEmailInputSection(context),
+                SizedBox(height: 24.h),
+                _buildPasswordInputSection(context),
+                SizedBox(height: 26.h),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Padding(
+                    padding: EdgeInsetsDirectional.only(start: 4.h),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, AppRoutes.forgotPasswordScreen);
+                      },
+                      child: Text(
+                        "Forgot Password",
+                        style: CustomTextStyles.titleSmallWorkSansPrimary,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              SizedBox(height: 20.h),
-              if (_errorMessage != null)
-                Padding(
-                  padding: EdgeInsets.only(bottom: 16.h),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(color: Colors.red, fontSize: 14.h),
+                SizedBox(height: 20.h),
+                if (_errorMessage != null)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: 16.h),
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(color: Colors.red, fontSize: 14.h),
+                    ),
                   ),
+                SizedBox(height: 10.h),
+                CustomElevatedButton(
+                  height: 46.h,
+                  text: _isLoading ? "Logging in..." : "Log in",
+                  margin: EdgeInsetsDirectional.only(
+                    start: 8.h,
+                    end: 2.h,
+                  ),
+                  buttonStyle: CustomButtonStyles.fillOrangeA,
+                  buttonTextStyle: CustomTextStyles.headlineSmallPoppinsWhiteA700,
+                  onPressed: _isLoading ? null : _handleLogin,
                 ),
-              SizedBox(height: 10.h),
-              CustomElevatedButton(
-                height: 46.h,
-                text: _isLoading ? "Logging in..." : "Log in",
-                margin: EdgeInsetsDirectional.only(
-                  start: 8.h,
-                  end: 2.h,
+                SizedBox(height: 18.h),
+                CustomElevatedButton(
+                  height: 46.h,
+                  text: "Sign up ",
+                  margin: EdgeInsetsDirectional.only(
+                    start: 8.h,
+                    end: 2.h,
+                  ),
+                  buttonStyle: CustomButtonStyles.fillOrangeA,
+                  buttonTextStyle: CustomTextStyles.headlineSmallPoppinsWhiteA700,
+                  onPressed: () {
+                    Navigator.pushNamed(context, AppRoutes.signUpScreen);
+                  },
                 ),
-                buttonTextStyle: CustomTextStyles.headlineSmallPoppinsWhiteA700,
-                onPressed: _isLoading ? null : _handleLogin,
-              ),
-              SizedBox(height: 18.h),
-              CustomElevatedButton(
-                height: 46.h,
-                text: "Sign up ",
-                margin: EdgeInsetsDirectional.only(
-                  start: 8.h,
-                  end: 2.h,
-                ),
-                buttonTextStyle: CustomTextStyles.headlineSmallPoppinsWhiteA700,
-                onPressed: () {
-                  Navigator.pushNamed(context, AppRoutes.signUpScreen);
-                },
-              )
-            ],
+                SizedBox(height: 20.h), // Added extra space at the bottom
+              ],
+            ),
           ),
         ),
       ),

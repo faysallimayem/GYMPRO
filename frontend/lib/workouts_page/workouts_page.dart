@@ -1,15 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:responsive_grid_list/responsive_grid_list.dart';
+import 'package:provider/provider.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
-import '../routes/app_routes.dart';
-import '../widgets.dart'; // ignore_for_file: must_be_immutable
+import '../services/workout_service.dart';
+import '../widgets.dart';
+import '../services/user_provider.dart';
+import '../workout_details_screen/workout_details_screen.dart';
 
-class WorkoutsPage extends StatelessWidget {
-  const WorkoutsPage({Key? key})
-      : super(
-          key: key,
-        );
+class WorkoutsPage extends StatefulWidget {
+  const WorkoutsPage({super.key});
+
+  @override
+  State<WorkoutsPage> createState() => _WorkoutsPageState();
+}
+
+class _WorkoutsPageState extends State<WorkoutsPage> {
+  bool isLoading = false;
+  String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch workouts when page loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchWorkouts();
+    });
+  }
+
+  Future<void> _fetchWorkouts() async {
+    try {
+      final workoutService = Provider.of<WorkoutService>(context, listen: false);
+      await workoutService.fetchWorkouts();
+    } catch (e) {
+      setState(() {
+        error = 'Failed to load workouts: $e';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +53,9 @@ class WorkoutsPage extends StatelessWidget {
                 spacing: 14,
                 children: [
                   _buildHeaderSection(context),
-                  _buildWorkoutsGrid(context),
+                  _buildMuscleGroupsSection(context),
                   _buildCoachesSection(context),
-                  _buildWeeklyProgressSection(context),
-                  SizedBox(height: 18.h)
+                  SizedBox(height: 18.h),
                 ],
               ),
             ),
@@ -41,6 +67,9 @@ class WorkoutsPage extends StatelessWidget {
 
   /// Section Widget
   Widget _buildHeaderSection(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userName = userProvider.username;
+
     return Container(
       width: double.maxFinite,
       margin: EdgeInsetsDirectional.only(
@@ -84,7 +113,7 @@ class WorkoutsPage extends StatelessWidget {
                               SizedBox(
                                 width: 148.h,
                                 child: Text(
-                                  "Welcome back, Nick!",
+                                  "Welcome back, $userName!",
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: CustomTextStyles
@@ -99,36 +128,6 @@ class WorkoutsPage extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 26.h),
-                  Padding(
-                    padding: EdgeInsetsDirectional.only(start: 10.h),
-                    child: Text(
-                      "Today’s Workouts",
-                      style: CustomTextStyles.headlineSmallWorkSansSemiBold,
-                    ),
-                  ),
-                  SizedBox(height: 12.h),
-                  ListView.separated(
-                    padding: EdgeInsetsDirectional.zero,
-                    physics: NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    separatorBuilder: (context, index) {
-                      return SizedBox(
-                        height: 18.h,
-                      );
-                    },
-                    itemCount: 2,
-                    itemBuilder: (context, index) {
-                      return ListpushUpsItemWidget();
-                    },
-                  ),
-                  SizedBox(height: 20.h),
-                  Padding(
-                    padding: EdgeInsetsDirectional.only(start: 10.h),
-                    child: Text(
-                      "Workout Programs",
-                      style: CustomTextStyles.headlineSmallWorkSansSemiBold,
-                    ),
-                  )
                 ],
               ),
             ),
@@ -144,6 +143,65 @@ class WorkoutsPage extends StatelessWidget {
     );
   }
 
+  Widget _buildErrorMessage(String errorMessage) {
+    return Container(
+      padding: EdgeInsets.all(16.h),
+      decoration: BoxDecoration(
+        color: Colors.red.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8.h),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.red),
+          SizedBox(width: 8.h),
+          Expanded(
+            child: Text(
+              errorMessage,
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.refresh, color: theme.colorScheme.primary),
+            onPressed: _fetchWorkouts,
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoWorkoutsMessage() {
+    return Container(
+      padding: EdgeInsets.all(16.h),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8.h),
+      ),
+      child: Column(
+        children: [
+          Text(
+            "No workouts found",
+            style: CustomTextStyles.titleMediumTTCommonsPrimary,
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            "Add workouts to your favorites to see them here",
+            textAlign: TextAlign.center,
+            style: CustomTextStyles.bodyMediumGray60001,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToWorkoutDetails(int workoutId) {
+    // Use direct navigation with MaterialPageRoute instead of Navigator.pushNamed
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => WorkoutDetailsScreen(workoutId: workoutId),
+      )
+    );
+  }
+
   /// Section Widget
   Widget _buildWorkoutsGrid(BuildContext context) {
     return Padding(
@@ -151,23 +209,109 @@ class WorkoutsPage extends StatelessWidget {
         start: 10.h,
         end: 16.h,
       ),
-      child: ResponsiveGridListBuilder(
-        minItemWidth: 1,
-        minItemsPerRow: 2,
-        maxItemsPerRow: 2,
-        horizontalGridSpacing: 6.h,
-        verticalGridSpacing: 6.h,
-        builder: (context, items) => ListView(
-          shrinkWrap: true,
-          padding: EdgeInsetsDirectional.zero,
-          physics: NeverScrollableScrollPhysics(),
-          children: items,
-        ),
-        gridItems: List.generate(
-          4,
-          (index) {
-            return WorkoutsgridItemWidget();
+      child: Consumer<WorkoutService>(
+        builder: (context, workoutService, child) {
+          if (workoutService.isLoading && workoutService.favoriteWorkouts.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: CircularProgressIndicator(color: theme.colorScheme.primary),
+              ),
+            );
+          }
+          
+          final workouts = workoutService.favoriteWorkouts;
+          
+          // Use MediaQuery to determine screen width and adjust grid accordingly
+          final screenWidth = MediaQuery.of(context).size.width;
+          final crossAxisCount = screenWidth < 600 ? 2 : (screenWidth < 1200 ? 3 : 4);
+          final aspectRatio = screenWidth < 600 ? 0.8 : 0.9;
+          
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 10.h,
+              mainAxisSpacing: 10.h,
+              childAspectRatio: aspectRatio,
+            ),
+            itemCount: workouts.isEmpty ? 1 : workouts.length,
+            itemBuilder: (context, index) {
+              if (workouts.isEmpty) {
+                return _buildAddWorkoutCard(context);
+              } else {
+                return WorkoutsgridItem(
+                  workout: workouts[index],
+                  onTap: () => _navigateToWorkoutDetails(workouts[index]['id']),
+                  onRemove: () => _removeFromFavorites(workouts[index]['id']),
+                );
+              }
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  void _removeFromFavorites(int workoutId) {
+    final workoutService = Provider.of<WorkoutService>(context, listen: false);
+    workoutService.removeFromFavorites(workoutId);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Workout removed from favorites"),
+        action: SnackBarAction(
+          label: "UNDO",
+          onPressed: () {
+            final removedWorkout = workoutService.workouts.firstWhere((w) => w['id'] == workoutId);
+            workoutService.addToFavorites(removedWorkout);
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddWorkoutCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // Navigate to browse workouts page
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text("Browse Workouts"),
+            content: Text("This feature will allow you to browse the workout library and add more workouts to your favorites."),
+            actions: [
+              TextButton(
+                child: Text("OK"),
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            ],
+          ),
+        );
+      },
+      child: Container(
+        width: double.maxFinite,
+        padding: EdgeInsetsDirectional.all(14.h),
+        decoration: AppDecoration.fillBlueGray.copyWith(
+          borderRadius: BorderRadiusStyle.roundedBorder16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_circle_outline,
+              size: 48.h,
+              color: theme.colorScheme.primary,
+            ),
+            SizedBox(height: 10.h),
+            Text(
+              "Add New Workout",
+              style: CustomTextStyles.titleMediumPoppinsPrimary,
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
@@ -189,18 +333,16 @@ class WorkoutsPage extends StatelessWidget {
               style: CustomTextStyles.headlineSmallPrimary,
             ),
           ),
-          Container(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Wrap(
-                direction: Axis.horizontal,
-                spacing: 14.h,
-                children: List.generate(
-                  5,
-                  (index) {
-                    return ListsarahOneItemWidget();
-                  },
-                ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Wrap(
+              direction: Axis.horizontal,
+              spacing: 14.h,
+              children: List.generate(
+                5,
+                (index) {
+                  return ListsarahOneItemWidget();
+                },
               ),
             ),
           )
@@ -209,232 +351,314 @@ class WorkoutsPage extends StatelessWidget {
     );
   }
 
-  /// Section Widget
-  Widget _buildWeeklyProgressSection(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      margin: EdgeInsetsDirectional.symmetric(horizontal: 10.h),
-      padding: EdgeInsetsDirectional.symmetric(horizontal: 4.h),
+  /// Muscle Groups Section
+  Widget _buildMuscleGroupsSection(BuildContext context) {
+    final muscleGroups = [
+      {'name': 'Chest & Arms', 'image': ImageConstant.imgRectangle188, 'query': 'chest'},
+      {'name': 'Legs & Core', 'image': ImageConstant.imgRectangle190, 'query': 'legs'},
+      {'name': 'Back & Shoulders', 'image': ImageConstant.imgRectangle194, 'query': 'back'},
+      {'name': 'Full Body', 'image': ImageConstant.imgRectangle192, 'query': 'full body'},
+    ];
+
+    return Padding(
+      padding: EdgeInsetsDirectional.only(start: 10.h, end: 10.h, top: 20.h),
       child: Column(
-        spacing: 4,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: EdgeInsetsDirectional.only(start: 4.h),
-            child: Text(
-              "Weekly Progress",
-              style: CustomTextStyles.headlineSmallWorkSansSemiBold,
-            ),
+          Text(
+            "Muscle Groups",
+            style: CustomTextStyles.headlineSmallWorkSansSemiBold,
           ),
-          Container(
-            height: 270.h,
-            width: 400.h,
-            margin: EdgeInsetsDirectional.only(start: 8.h),
-            decoration: BoxDecoration(
-              color: appTheme.blueGray50,
-              borderRadius: BorderRadius.circular(
-                16.h,
-              ),
+          SizedBox(height: 12.h),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10.h,
+              mainAxisSpacing: 10.h,
+              childAspectRatio: 1.2,
             ),
-          )
+            itemCount: muscleGroups.length,
+            itemBuilder: (context, index) {
+              final group = muscleGroups[index];
+              return GestureDetector(
+                onTap: () {
+                  // Use direct navigation with MaterialPageRoute instead of Navigator.pushNamed
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => WorkoutDetailsScreen(
+                        queryFilter: group['query'] as String,
+                      ),
+                    ),
+                  );
+                  
+                  print('Navigating to muscle group: ${group['query']}');
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12.h),
+                    image: DecorationImage(
+                      image: AssetImage(group['image'] as String),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  alignment: Alignment.bottomCenter,
+                  padding: EdgeInsets.all(8.h),
+                  child: Text(
+                    group['name'] as String,
+                    style: CustomTextStyles.titleLargeInterWhiteA700SemiBold,
+                  ),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
   }
 }
 
-class ListpushUpsItemWidget extends StatelessWidget {
-  const ListpushUpsItemWidget({Key? key})
-      : super(
-          key: key,
-        );
+class ListpushUpsItem extends StatelessWidget {
+  final Map<String, dynamic> workout;
+  final VoidCallback? onTap;
+
+  const ListpushUpsItem({
+    super.key,
+    required this.workout,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 172.h,
-      child: Stack(
-        alignment: AlignmentDirectional.center,
-        children: [
-          CustomImageView(
-            imagePath: ImageConstant.imgClock,
-            height: 6.h,
-            width: 8.h,
-            alignment: AlignmentDirectional.bottomStart,
-            margin: EdgeInsetsDirectional.only(
-              start: 44.h,
-              bottom: 56.h,
+    final name = workout['name'] ?? 'Workout';
+    final duration = workout['duration'] ?? 30;
+    
+    // Calculate some stats based on the exercises
+    final exercises = (workout['exercises'] as List?)?.length ?? 0;
+    final reps = 10 * exercises; // Just a placeholder calculation
+    final sets = 3; // Default placeholder
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        height: 172.h,
+        child: Stack(
+          alignment: AlignmentDirectional.center,
+          children: [
+            CustomImageView(
+              imagePath: ImageConstant.imgClock,
+              height: 6.h,
+              width: 8.h,
+              alignment: AlignmentDirectional.bottomStart,
+              margin: EdgeInsetsDirectional.only(
+                start: 44.h,
+                bottom: 56.h,
+              ),
             ),
-          ),
-          Container(
-            width: double.maxFinite,
-            padding: EdgeInsetsDirectional.symmetric(
-              horizontal: 6.h,
-              vertical: 8.h,
-            ),
-            decoration: AppDecoration.outline2.copyWith(
-              borderRadius: BorderRadiusStyle.roundedBorder8,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Your next workout:",
-                  style: CustomTextStyles.bodyLargeInterPrimary,
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  "Push ups",
-                  style: CustomTextStyles.titleLargeInterMedium,
-                ),
-                SizedBox(height: 6.h),
-                Container(
-                  width: double.maxFinite,
-                  margin: EdgeInsetsDirectional.only(
-                    start: 8.h,
-                    end: 26.h,
+            Container(
+              width: double.maxFinite,
+              padding: EdgeInsetsDirectional.symmetric(
+                horizontal: 6.h,
+                vertical: 8.h,
+              ),
+              decoration: AppDecoration.outline2.copyWith(
+                borderRadius: BorderRadiusStyle.roundedBorder8,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Your next workout:",
+                    style: CustomTextStyles.bodyLargeInterPrimary,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Column(
+                  SizedBox(height: 4.h),
+                  Text(
+                    name,
+                    style: CustomTextStyles.titleLargeInterMedium,
+                  ),
+                  SizedBox(height: 6.h),
+                  Container(
+                    width: double.maxFinite,
+                    margin: EdgeInsetsDirectional.only(
+                      start: 8.h,
+                      end: 26.h,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            spacing: 4,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Duration:",
+                                style: CustomTextStyles.titleSmallInter,
+                              ),
+                              Text(
+                                "$duration minutes",
+                                style: CustomTextStyles.bodyMediumRegular,
+                              )
+                            ],
+                          ),
+                        ),
+                        Column(
                           spacing: 4,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Duration:",
+                              "Reps:",
                               style: CustomTextStyles.titleSmallInter,
                             ),
                             Text(
-                              "30 minutes",
+                              "$reps",
                               style: CustomTextStyles.bodyMediumRegular,
                             )
                           ],
                         ),
-                      ),
-                      Column(
-                        spacing: 4,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Reps:",
-                            style: CustomTextStyles.titleSmallInter,
-                          ),
-                          Text(
-                            "115",
-                            style: CustomTextStyles.bodyMediumRegular,
-                          )
-                        ],
-                      ),
-                      Column(
-                        spacing: 4,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Sets:",
-                            style: CustomTextStyles.titleSmallInter,
-                          ),
-                          Text(
-                            "15",
-                            style: CustomTextStyles.bodyMediumRegular,
-                          )
-                        ],
-                      ),
-                      Column(
-                        spacing: 4,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Exercise:",
-                            style: CustomTextStyles.titleSmallInter,
-                          ),
-                          Text(
-                            "5",
-                            style: CustomTextStyles.bodyMediumRegular,
-                          )
-                        ],
-                      )
-                    ],
+                        Column(
+                          spacing: 4,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Sets:",
+                              style: CustomTextStyles.titleSmallInter,
+                            ),
+                            Text(
+                              "$sets",
+                              style: CustomTextStyles.bodyMediumRegular,
+                            )
+                          ],
+                        ),
+                        Column(
+                          spacing: 4,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Exercise:",
+                              style: CustomTextStyles.titleSmallInter,
+                            ),
+                            Text(
+                              "$exercises",
+                              style: CustomTextStyles.bodyMediumRegular,
+                            )
+                          ],
+                        )
+                      ],
+                    ),
                   ),
-                ),
-                SizedBox(height: 10.h),
-                CustomOutlinedButton(
-                  height: 40.h,
-                  text: "Start workout",
-                  margin: EdgeInsetsDirectional.only(
-                    start: 12.h,
-                    end: 14.h,
-                  ),
-                  buttonStyle: CustomButtonStyles.none,
-                  decoration: CustomButtonStyles.outlineTL8Decoration,
-                  buttonTextStyle: CustomTextStyles.headlineSmallWhiteA700,
-                )
-              ],
-            ),
-          )
-        ],
+                  SizedBox(height: 10.h),
+                  CustomOutlinedButton(
+                    height: 40.h,
+                    text: "Start workout",
+                    margin: EdgeInsetsDirectional.only(
+                      start: 12.h,
+                      end: 14.h,
+                    ),
+                    buttonStyle: CustomButtonStyles.none,
+                    decoration: CustomButtonStyles.outlineTL8Decoration,
+                    buttonTextStyle: CustomTextStyles.headlineSmallWhiteA700,
+                    onPressed: onTap,
+                  )
+                ],
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
 }
 
-class WorkoutsgridItemWidget extends StatelessWidget {
-  const WorkoutsgridItemWidget({Key? key})
-      : super(
-          key: key,
-        );
+class WorkoutsgridItem extends StatelessWidget {
+  final Map<String, dynamic> workout;
+  final VoidCallback? onTap;
+  final VoidCallback? onRemove;
+
+  const WorkoutsgridItem({
+    super.key,
+    required this.workout,
+    this.onTap,
+    this.onRemove,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      padding: EdgeInsetsDirectional.all(14.h),
-      decoration: AppDecoration.fillBlueGray.copyWith(
-        borderRadius: BorderRadiusStyle.roundedBorder16,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(height: 4.h),
-          CustomImageView(
-            imagePath: ImageConstant.imgRectangle188,
-            height: 138.h,
-            width: double.maxFinite,
-            radius: BorderRadius.circular(
-              16.h,
+    final name = workout['name'] ?? 'Workout';
+    final duration = workout['duration'] ?? 45;
+    final exercises = (workout['exercises'] as List?)?.length ?? 0;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.maxFinite,
+        padding: EdgeInsetsDirectional.all(14.h),
+        decoration: AppDecoration.fillBlueGray.copyWith(
+          borderRadius: BorderRadiusStyle.roundedBorder16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(child: SizedBox()), // Push the icon to the right
+                if (onRemove != null)
+                  GestureDetector(
+                    onTap: onRemove,
+                    child: Container(
+                      padding: EdgeInsets.all(4.h),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.favorite,
+                        size: 20.h,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
+              ],
             ),
-            margin: EdgeInsetsDirectional.only(end: 8.h),
-          ),
-          Padding(
-            padding: EdgeInsetsDirectional.only(start: 4.h),
-            child: Text(
-              "Chest & Arms",
-              style: CustomTextStyles.titleLargeInterBluegray70001,
+            SizedBox(height: 4.h),
+            CustomImageView(
+              imagePath: ImageConstant.imgRectangle188,
+              height: 138.h,
+              width: double.maxFinite,
+              radius: BorderRadius.circular(
+                16.h,
+              ),
+              margin: EdgeInsetsDirectional.only(end: 8.h),
             ),
-          ),
-          Padding(
-            padding: EdgeInsetsDirectional.only(start: 6.h),
-            child: Text(
-              "12 exercises • 45 min",
-              style: CustomTextStyles.labelMediumInterBluegray70001,
+            Padding(
+              padding: EdgeInsetsDirectional.only(start: 4.h, top: 8.h),
+              child: Text(
+                name,
+                style: CustomTextStyles.titleLargeInterBluegray70001,
+              ),
             ),
-          )
-        ],
+            Padding(
+              padding: EdgeInsetsDirectional.only(start: 6.h),
+              child: Text(
+                "$exercises exercises • $duration min",
+                style: CustomTextStyles.labelMediumInterBluegray70001,
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
 }
 
 class ListsarahOneItemWidget extends StatelessWidget {
-  const ListsarahOneItemWidget({Key? key})
-      : super(
-          key: key,
-        );
+  const ListsarahOneItemWidget({super.key});
 
   @override
   Widget build(BuildContext context) {

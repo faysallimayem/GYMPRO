@@ -1,8 +1,9 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import '../app_theme.dart';
-import '../app_utils.dart';
 import '../responsive_utils.dart';
 import '../routes/app_routes.dart';
 import '../widgets.dart';
@@ -10,21 +11,40 @@ import '../services/registration_provider.dart';
 import '../services/auth_service.dart';
 
 class WeightScreen extends StatefulWidget {
-  const WeightScreen({Key? key}) : super(key: key);
+  const WeightScreen({super.key});
 
   @override
   State<WeightScreen> createState() => _WeightScreenState();
 }
 
 class _WeightScreenState extends State<WeightScreen> {
-  int selectedWeight = 75; // Default weight
+  int selectedWeight = 70; // Default weight
   bool _isLoading = false;
   String? _errorMessage;
+  
+  // Define weight range
+  final int minWeight = 40;
+  final int maxWeight = 220;
+  
+  // Using FixedExtentScrollController for horizontal weight selection
+  late final FixedExtentScrollController _scrollController;
+  
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = FixedExtentScrollController(
+      initialItem: selectedWeight - minWeight, // Initial item calculation
+    );
+  }
+  
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-    
     return Scaffold(
       backgroundColor: appTheme.whiteA700,
       appBar: _buildAppBar(context),
@@ -39,17 +59,9 @@ class _WeightScreenState extends State<WeightScreen> {
               children: [
                 _buildHeader(context),
                 Spacer(flex: 62),
-                _buildWeightSelectionRow(context),
-                CustomImageView(
-                  imagePath: ImageConstant.imgPolygon1,
-                  height: context.heightRatio(0.04),
-                  width: context.widthRatio(0.12),
-                  radius: BorderRadius.circular(4),
-                ),
-                SizedBox(height: context.heightRatio(0.01)),
-                _buildLineDividerRow(context),
-                SizedBox(height: context.heightRatio(0.04)),
                 _buildWeightDisplay(context),
+                SizedBox(height: context.heightRatio(0.03)),
+                _buildHorizontalWeightWheel(context),
                 if (_errorMessage != null)
                   Padding(
                     padding: EdgeInsets.symmetric(
@@ -77,17 +89,9 @@ class _WeightScreenState extends State<WeightScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        _buildWeightSelectionRow(context),
-                        CustomImageView(
-                          imagePath: ImageConstant.imgPolygon1,
-                          height: context.heightRatio(0.05),
-                          width: context.widthRatio(0.1),
-                          radius: BorderRadius.circular(4),
-                        ),
-                        SizedBox(height: context.heightRatio(0.01)),
-                        _buildLineDividerRow(context),
-                        SizedBox(height: context.heightRatio(0.05)),
                         _buildWeightDisplay(context),
+                        SizedBox(height: context.heightRatio(0.03)),
+                        _buildHorizontalWeightWheel(context),
                         if (_errorMessage != null)
                           Padding(
                             padding: EdgeInsets.symmetric(
@@ -125,17 +129,9 @@ class _WeightScreenState extends State<WeightScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildWeightSelectionRow(context),
-                      CustomImageView(
-                        imagePath: ImageConstant.imgPolygon1,
-                        height: context.heightRatio(0.05),
-                        width: context.widthRatio(0.08),
-                        radius: BorderRadius.circular(4),
-                      ),
-                      SizedBox(height: context.heightRatio(0.01)),
-                      _buildLineDividerRow(context),
-                      SizedBox(height: context.heightRatio(0.05)),
                       _buildWeightDisplay(context),
+                      SizedBox(height: context.heightRatio(0.03)),
+                      _buildHorizontalWeightWheel(context),
                       if (_errorMessage != null)
                         Padding(
                           padding: EdgeInsets.symmetric(
@@ -164,7 +160,7 @@ class _WeightScreenState extends State<WeightScreen> {
   /// Section Widget - Header
   Widget _buildHeader(BuildContext context) {
     return Container(
-      height: context.heightRatio(0.1),
+      height: context.heightRatio(0.12),
       width: ResponsiveUtils.responsiveValue(
         context: context,
         mobile: double.infinity,
@@ -172,21 +168,19 @@ class _WeightScreenState extends State<WeightScreen> {
         desktop: context.widthRatio(0.3),
       ),
       margin: EdgeInsets.symmetric(horizontal: context.widthRatio(0.1)),
-      child: Stack(
-        alignment: AlignmentDirectional.bottomCenter,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Align(
-            alignment: AlignmentDirectional.topCenter,
-            child: Text(
-              "GYM PRO",
-              style: TextStyle(
-                fontSize: context.responsiveFontSize(28),
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-                fontFamily: theme.textTheme.displaySmall?.fontFamily,
-              ),
+          Text(
+            "GYM PRO",
+            style: TextStyle(
+              fontSize: context.responsiveFontSize(28),
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+              fontFamily: theme.textTheme.displaySmall?.fontFamily,
             ),
           ),
+          SizedBox(height: context.heightRatio(0.02)),
           Text(
             "What Is Your Weight?",
             style: TextStyle(
@@ -209,79 +203,6 @@ class _WeightScreenState extends State<WeightScreen> {
         onTap: () {
           Navigator.pop(context);
         },
-      ),
-    );
-  }
-
-  /// Section Widget - Weight Selection Row
-  Widget _buildWeightSelectionRow(BuildContext context) {
-    final double fontSize = context.responsiveFontSize(20);
-    final double selectedFontSize = context.responsiveFontSize(32);
-    
-    return Container(
-      width: double.maxFinite,
-      margin: EdgeInsets.symmetric(horizontal: context.widthRatio(0.08)),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "73",
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.bold,
-              color: appTheme.black900,
-              fontFamily: CustomTextStyles.headlineSmallPoppinsBlack900.fontFamily,
-            ),
-          ),
-          SizedBox(
-            width: context.widthRatio(0.12),
-            child: Text(
-              "74",
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: fontSize,
-                fontWeight: FontWeight.bold,
-                color: appTheme.black900,
-                fontFamily: CustomTextStyles.displaySmallBlack900.fontFamily,
-              ),
-            ),
-          ),
-          Text(
-            "75",
-            style: TextStyle(
-              fontSize: selectedFontSize,
-              fontWeight: FontWeight.bold,
-              color: appTheme.black900,
-              fontFamily: theme.textTheme.displayMedium?.fontFamily,
-            ),
-          ),
-          SizedBox(
-            width: context.widthRatio(0.12),
-            child: Text(
-              "76",
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: fontSize,
-                fontWeight: FontWeight.bold,
-                color: appTheme.black900,
-                fontFamily: CustomTextStyles.displaySmallBlack900.fontFamily,
-              ),
-            ),
-          ),
-          Text(
-            "77",
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.bold,
-              color: appTheme.black900,
-              fontFamily: CustomTextStyles.headlineSmallPoppinsBlack900.fontFamily,
-            ),
-          )
-        ],
       ),
     );
   }
@@ -315,66 +236,6 @@ class _WeightScreenState extends State<WeightScreen> {
           ),
         )
       ],
-    );
-  }
-
-  /// Section Widget - Line Divider Row
-  Widget _buildLineDividerRow(BuildContext context) {
-    // Calculate divider width based on screen width
-    final double dividerWidth = ResponsiveUtils.responsiveValue<double>(
-      context: context,
-      mobile: context.widthRatio(0.005),
-      tablet: context.widthRatio(0.004),
-      desktop: context.widthRatio(0.003),
-    );
-    
-    // Calculate container width based on screen size
-    final double containerWidth = ResponsiveUtils.responsiveValue<double>(
-      context: context,
-      mobile: context.widthRatio(0.8),
-      tablet: context.widthRatio(0.6),
-      desktop: context.widthRatio(0.4),
-    );
-    
-    return Align(
-      alignment: AlignmentDirectional.centerStart,
-      child: Container(
-        width: containerWidth,
-        padding: EdgeInsets.symmetric(
-          horizontal: context.widthRatio(0.05),
-          vertical: context.heightRatio(0.015),
-        ),
-        decoration: AppDecoration.fillOnPrimaryContainer,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(19, (index) {
-            // Make the 10th divider (index 9) orange and thicker
-            if (index == 9) {
-              return VerticalDivider(
-                width: dividerWidth * 1.5,
-                thickness: dividerWidth * 1.5,
-                color: appTheme.orangeA700,
-              );
-            }
-            // Make the 15th divider (index 14) black and slightly thicker
-            else if (index == 14) {
-              return VerticalDivider(
-                width: dividerWidth,
-                thickness: dividerWidth,
-                color: appTheme.black900,
-              );
-            }
-            // Normal dividers
-            else {
-              return VerticalDivider(
-                width: dividerWidth,
-                thickness: dividerWidth,
-              );
-            }
-          }),
-        ),
-      ),
     );
   }
 
@@ -417,8 +278,8 @@ class _WeightScreenState extends State<WeightScreen> {
       // Debug print - remove in production
       print('Sending registration data: ${json.encode(userData)}');
       
-      // Call the signup API with all collected data - making sure to use POST
-      final result = await Provider.of<AuthService>(context, listen: false).signUp(userData);
+      // Call the register API with all collected data - making sure to use POST
+      final result = await Provider.of<AuthService>(context, listen: false).register(userData);
       
       // Debug - remove in production
       print('Registration successful: $result');
@@ -446,5 +307,90 @@ class _WeightScreenState extends State<WeightScreen> {
         });
       }
     }
+  }
+
+  // Horizontal weight selector wheel
+  Widget _buildHorizontalWeightWheel(BuildContext context) {
+    final double containerWidth = context.widthRatio(0.8);
+    final double containerHeight = context.heightRatio(0.15);
+    
+    return Container(
+      width: containerWidth,
+      height: containerHeight,
+      decoration: BoxDecoration(
+        color: Color(0xFFF5F5F5), // Light gray background
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // The main horizontal wheel
+          RotatedBox(
+            quarterTurns: 3,
+            child: ListWheelScrollView.useDelegate(
+              controller: _scrollController,
+              physics: const FixedExtentScrollPhysics(
+                parent: BouncingScrollPhysics(),
+              ),
+              itemExtent: containerWidth * 0.08,
+              diameterRatio: 2.5, 
+              perspective: 0.003,
+              overAndUnderCenterOpacity: 0.7,
+              magnification: 1.2,
+              useMagnifier: true,
+              onSelectedItemChanged: (index) {
+                setState(() {
+                  selectedWeight = minWeight + index;
+                });
+              },
+              childDelegate: ListWheelChildBuilderDelegate(
+                childCount: maxWeight - minWeight + 1,
+                builder: (context, index) {
+                  final weight = minWeight + index;
+                  final bool isMajor = weight % 5 == 0;
+                  
+                  // Rotate the items back to be readable horizontally
+                  return RotatedBox(
+                    quarterTurns: 1, // Rotate back 90 degrees
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Weight label (only for multiples of 5)
+                        if (isMajor) 
+                          Text(
+                            weight.toString(),
+                            style: TextStyle(
+                              fontSize: context.responsiveFontSize(14),
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        
+                        // Tick mark
+                        if (!isMajor)
+                          Container(
+                            width: 2,
+                            height: containerHeight * 0.15,
+                            color: Colors.grey[400],
+                          ),
+                      ],
+                    ),
+                  );
+                }
+              ),
+            ),
+          ),
+          
+          // Center indicator (orange line)
+          Center(
+            child: Container(
+              width: 2,
+              height: containerHeight * 0.6,
+              color: appTheme.orangeA700,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

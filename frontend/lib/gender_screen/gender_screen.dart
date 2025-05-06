@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../app_theme.dart';
@@ -8,20 +10,17 @@ import '../widgets.dart';
 import '../services/registration_provider.dart';
 
 class GenderScreen extends StatefulWidget {
-  const GenderScreen({Key? key}) : super(key: key);
+  const GenderScreen({super.key});
 
   @override
   State<GenderScreen> createState() => _GenderScreenState();
 }
 
 class _GenderScreenState extends State<GenderScreen> {
-  String selectedGender = ""; // No default gender selected
+  String selectedGender = "";
 
   @override
   Widget build(BuildContext context) {
-    // Get screen dimensions for responsive sizing
-    final Size screenSize = MediaQuery.of(context).size;
-    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     
     return Scaffold(
       backgroundColor: appTheme.whiteA700,
@@ -137,29 +136,30 @@ class _GenderScreenState extends State<GenderScreen> {
   
   Widget _buildHeader() {
     return SizedBox(
-      height: context.heightRatio(0.08),
+      height: context.heightRatio(0.12),
       width: context.widthRatio(0.6),
-      child: Stack(
-        alignment: AlignmentDirectional.bottomCenter,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          // GYM PRO title at the top
+          Text(
+            "GYM PRO",
+            style: TextStyle(
+              fontSize: context.responsiveFontSize(28),
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+              fontFamily: theme.textTheme.displaySmall?.fontFamily,
+            ),
+          ),
+          // Add spacing between texts
+          SizedBox(height: context.heightRatio(0.02)),
+          // What's Your Gender text below
           Text(
             "What's Your Gender",
             style: TextStyle(
               fontSize: context.responsiveFontSize(22),
               fontWeight: FontWeight.bold,
               fontFamily: CustomTextStyles.headlineSmallWorkSansBold.fontFamily,
-            ),
-          ),
-          Align(
-            alignment: AlignmentDirectional.topCenter,
-            child: Text(
-              "GYM PRO",
-              style: TextStyle(
-                fontSize: context.responsiveFontSize(28),
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-                fontFamily: theme.textTheme.displaySmall?.fontFamily,
-              ),
             ),
           )
         ],
@@ -207,13 +207,12 @@ class _GenderScreenState extends State<GenderScreen> {
       text: "Continue",
       buttonTextStyle: TextStyle(
         fontSize: context.responsiveFontSize(18),
-        color: Colors.white,
+        color:Color(0xFFFF7900),
         fontWeight: FontWeight.bold,
         fontFamily: CustomTextStyles.headlineSmallPoppinsWhiteA700.fontFamily,
       ),
       onPressed: () {
         if (selectedGender.isNotEmpty) {
-          // Save selected gender to registration provider
           final registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
           registrationProvider.setGender(selectedGender);
           
@@ -271,7 +270,7 @@ class _GenderScreenState extends State<GenderScreen> {
             decoration: BoxDecoration(
               color: isSelected
                   ? theme.colorScheme.primary
-                  : appTheme.black900,
+                  : Colors.orange,
               shape: BoxShape.circle,
               boxShadow: isSelected
                   ? [

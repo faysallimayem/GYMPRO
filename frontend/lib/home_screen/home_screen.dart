@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:responsive_grid_list/responsive_grid_list.dart';
+import 'package:provider/provider.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
 import '../gym_classes_page/gym_classes_page.dart';
 import '../routes/app_routes.dart';
+import '../services/user_provider.dart';
 import '../user_profile_page/user_profile_page.dart';
 import '../widgets.dart';
 import '../workouts_page/workouts_page.dart';
+import '../nutrition_screen/nutrition_screen.dart';
 
 // ignore_for_file: must_be_immutable
 class HomeScreen extends StatelessWidget {
-  HomeScreen({Key? key})
-      : super(
-          key: key,
-        );
+  HomeScreen({super.key});
 
   GlobalKey<NavigatorState> navigatorKey = GlobalKey();
 
@@ -77,13 +77,11 @@ class HomeScreen extends StatelessWidget {
       case BottomBarEnum.Maximize:
         return AppRoutes.workoutsPage;
       case BottomBarEnum.Medicaliconinutrition:
-        return "/";
+        return AppRoutes.nutritionScreen;
       case BottomBarEnum.Calendar:
         return AppRoutes.gymClassesPage;
       case BottomBarEnum.Lockgray600:
         return AppRoutes.userProfilePage;
-      default:
-        return "/";
     }
   }
 
@@ -94,6 +92,8 @@ class HomeScreen extends StatelessWidget {
         return HomeInitialPage();
       case AppRoutes.workoutsPage:
         return WorkoutsPage();
+      case AppRoutes.nutritionScreen:
+        return NutritionScreen();
       case AppRoutes.gymClassesPage:
         return GymClassesPage();
       case AppRoutes.userProfilePage:
@@ -105,10 +105,7 @@ class HomeScreen extends StatelessWidget {
 }
 
 class HomeThreeItemWidget extends StatelessWidget {
-  const HomeThreeItemWidget({Key? key})
-      : super(
-          key: key,
-        );
+  const HomeThreeItemWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -216,10 +213,7 @@ class HomeThreeItemWidget extends StatelessWidget {
 }
 
 class HomeFourItemWidget extends StatelessWidget {
-  const HomeFourItemWidget({Key? key})
-      : super(
-          key: key,
-        );
+  const HomeFourItemWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -243,10 +237,7 @@ class HomeFourItemWidget extends StatelessWidget {
 }
 
 class HomeInitialPage extends StatefulWidget {
-  const HomeInitialPage({Key? key})
-      : super(
-          key: key,
-        );
+  const HomeInitialPage({super.key});
 
   @override
   HomeInitialPageState createState() => HomeInitialPageState();
@@ -324,7 +315,7 @@ class HomeInitialPageState extends State<HomeInitialPage> {
                   SizedBox(
                     width: 126.h,
                     child: Text(
-                      "Welcome back, Nick!",
+                      "Welcome back, ${Provider.of<UserProvider>(context).username}",
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: CustomTextStyles.titleLargeTTCommonsWhiteA700,

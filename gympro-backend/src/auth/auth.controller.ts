@@ -6,30 +6,56 @@ import { UserService } from 'src/user/user.service';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-
 import { SignupDto } from './dto/signup.dto';
 import { AuthGuard } from '@nestjs/passport';
+import { WorkoutService } from 'src/workout/workout.service';
 
 @ApiTags('auth') 
 @Controller('auth')
 export class AuthController {
     constructor(
         private authService: AuthService,
-        private userService: UserService
+        private userService: UserService,
+        private workoutService: WorkoutService
     ) {}
 
     @Post('signup')
     @ApiOperation({ summary: 'Sign up a new user' })
     @ApiBody({ type: SignupDto })
     async signUp(@Body() createUserDto: CreateUserDto) {
-        return this.authService.signUp(createUserDto);
+        const result = await this.authService.signUp(createUserDto);
+        
+        // Get user and create default workouts
+        const user = await this.userService.getByEmail(createUserDto.email);
+        if (user) {
+            console.log(`Creating default workouts for new user: ${user.email}`);
+            await this.workoutService.createDefaultWorkouts(user);
+        }
+        
+        return result;
     }
 
     @Post('login')
     @ApiOperation({ summary: 'Log in a user' })
     @ApiBody({ type: LoginDto })
     async logIn(@Body() loginDto: LoginDto) {
-        return this.authService.logIn(loginDto.email, loginDto.mot_de_passe);
+        try {
+            console.log('Login attempt with:', { email: loginDto.email });
+            const result = await this.authService.logIn(loginDto.email, loginDto.password);
+            
+            // Get user and ensure they have default workouts
+            const user = await this.userService.getByEmail(loginDto.email);
+            if (user) {
+                console.log(`Checking default workouts for user: ${user.email}`);
+                // This will only create workouts if the user doesn't have any
+                await this.workoutService.createDefaultWorkouts(user);
+            }
+            
+            return result;
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
+        }
     }
 
     @Post('forgot-password')

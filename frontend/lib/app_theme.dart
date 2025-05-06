@@ -5,6 +5,13 @@ String _appTheme = "lightCode";
 LightCodeColors get appTheme => ThemeHelper().themeColor();
 ThemeData get theme => ThemeHelper().themeData();
 
+// Adding direct color constants for easier access
+class AppTheme {
+  static const Color primaryColor = Color(0XFFF97316);  // Orange from colorScheme.primary
+  static const Color secondaryColor = Color(0XFF28A745);  // Green from appTheme.green600
+  static const Color backgroundColor = Color(0XFFFAFAFA);  // Light gray background
+}
+
 extension on TextStyle {
   TextStyle get inter {
     return copyWith(
@@ -455,18 +462,18 @@ class CustomTextStyles {
 // ignore_for_file: must_be_immutable
 class ThemeHelper {
   // A map of custom color themes supported by the app
-  Map<String, LightCodeColors> _supportedCustomColor = {
+  final Map<String, LightCodeColors> _supportedCustomColor = {
     'lightCode': LightCodeColors()
   };
 
 // A map of color schemes supported by the app
-  Map<String, ColorScheme> _supportedColorScheme = {
+  final Map<String, ColorScheme> _supportedColorScheme = {
     'lightCode': ColorSchemes.lightCodeColorScheme
   };
 
-  /// Changes the app theme to [_newTheme].
-  void changeTheme(String _newTheme) {
-    _appTheme = _newTheme;
+  /// Changes the app theme to [newTheme].
+  void changeTheme(String newTheme) {
+    _appTheme = newTheme;
   }
 
   /// Returns the lightCode colors for the current theme.

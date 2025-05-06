@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
-import '../routes/app_routes.dart';
 import '../widgets.dart';
 
 // ignore_for_file: must_be_immutable
 class ExerciceManagmentScreen extends StatelessWidget {
-  ExerciceManagmentScreen({Key? key})
-      : super(
-          key: key,
-        );
+  ExerciceManagmentScreen({super.key});
 
   TextEditingController searchController = TextEditingController();
 
@@ -420,7 +416,7 @@ class ExerciceManagmentScreen extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Container(
+            child: SizedBox(
               height: 126.h,
               child: Stack(
                 alignment: AlignmentDirectional.bottomEnd,
@@ -634,10 +630,7 @@ class ExerciceManagmentScreen extends StatelessWidget {
 }
 
 class ListtwentyfiveItemWidget extends StatelessWidget {
-  const ListtwentyfiveItemWidget({Key? key})
-      : super(
-          key: key,
-        );
+  const ListtwentyfiveItemWidget({super.key});
 
   @override
   Widget build(BuildContext context) {

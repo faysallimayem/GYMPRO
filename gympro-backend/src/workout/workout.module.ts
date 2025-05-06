@@ -1,18 +1,20 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { WorkoutService } from './workout.service';
 import { WorkoutController } from './workout.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { Workout } from './workout.entity';
-import { ExerciseModule } from 'src/exercise/exercise.module';
-import { UserModule } from 'src/user/user.module';
+import { UserModule } from '../user/user.module';
+import { Exercise } from '../exercise/exercise.entity';
+import { WorkoutInitializationService } from './workout-initialization.service';
+import { User } from '../user/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Workout]),
-    ExerciseModule,
-    UserModule,
-],
-  providers: [WorkoutService],
-  controllers: [WorkoutController]
+    TypeOrmModule.forFeature([Workout, Exercise, User]), 
+    forwardRef(() => UserModule)  // Use forwardRef to break circular dependency
+  ],
+  controllers: [WorkoutController],
+  providers: [WorkoutService, WorkoutInitializationService],
+  exports: [WorkoutService],
 })
 export class WorkoutModule {}

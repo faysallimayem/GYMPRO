@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../app_theme.dart';
 import '../routes/app_routes.dart';
 import '../services/registration_provider.dart';
 
 class HeightScreen extends StatefulWidget {
-  const HeightScreen({Key? key}) : super(key: key);
+  const HeightScreen({super.key});
 
   @override
   State<HeightScreen> createState() => _HeightScreenState();
@@ -67,18 +66,16 @@ class _HeightScreenState extends State<HeightScreen> {
           builder: (context, constraints) {
             return Column(
               children: [
-                // GYM PRO title
                 Text(
                   "GYM PRO",
                   style: TextStyle(
-                    color: Color(0xFFFF4500), // Orange color from screenshot
+                    color: Color(0xFFFF4500), 
                     fontSize: titleFontSize,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 SizedBox(height: verticalSpacing),
                 
-                // What Is Your Height? heading
                 Text(
                   "What Is Your Height?",
                   style: TextStyle(
@@ -183,12 +180,11 @@ class _HeightScreenState extends State<HeightScreen> {
                           ),
                         ),
                       ),
-                      // Adjusted orange triangle indicator with responsive positioning
+                      // Add triangle indicator that points to the selected value
                       Positioned(
-                        right: screenWidth * 0.1, // 10% of screen width
-                        top: constraints.maxHeight * 0.35 - (screenWidth * 0.03),
+                        right: screenWidth * 0.21,
                         child: CustomPaint(
-                          size: Size(screenWidth * 0.06, screenWidth * 0.06),
+                          size: Size(screenWidth * 0.03, screenWidth * 0.03),
                           painter: _TriangleIndicatorPainter(),
                         ),
                       ),
@@ -202,7 +198,7 @@ class _HeightScreenState extends State<HeightScreen> {
                     horizontal: horizontalPadding, 
                     vertical: verticalSpacing
                   ),
-                  child: Container(
+                  child: SizedBox(
                     width: double.infinity,
                     height: screenHeight * 0.065, // Responsive height
                     child: ElevatedButton(
@@ -225,7 +221,7 @@ class _HeightScreenState extends State<HeightScreen> {
                         style: TextStyle(
                           fontSize: buttonFontSize,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: Color(0xFFFF7900), // Light orange color from screenshot
                         ),
                       ),
                     ),
@@ -240,7 +236,6 @@ class _HeightScreenState extends State<HeightScreen> {
   }
 }
 
-// Triangle painter for the indicator
 class _TriangleIndicatorPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {

@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
-import '../routes/app_routes.dart';
 import '../widgets.dart';
 
 // ignore_for_file: must_be_immutable
 class AddExerciseScreen extends StatelessWidget {
-  AddExerciseScreen({Key? key})
-      : super(
-          key: key,
-        );
+  AddExerciseScreen({super.key});
 
   TextEditingController exerciseNameInputController = TextEditingController();
 

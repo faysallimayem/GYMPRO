@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
-import '../routes/app_routes.dart';
 import '../widgets.dart';
 
 // ignore_for_file: must_be_immutable
 class UserManagmentScreen extends StatelessWidget {
-  UserManagmentScreen({Key? key})
-      : super(
-          key: key,
-        );
+  UserManagmentScreen({super.key});
 
   TextEditingController searchController = TextEditingController();
 
@@ -612,10 +608,7 @@ class UserManagmentScreen extends StatelessWidget {
 }
 
 class UserManagmentItemWidget extends StatelessWidget {
-  const UserManagmentItemWidget({Key? key})
-      : super(
-          key: key,
-        );
+  const UserManagmentItemWidget({super.key});
 
   @override
   Widget build(BuildContext context) {

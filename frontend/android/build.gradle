@@ -12,7 +12,19 @@ buildscript {
 rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
+    
+    // Add namespace to plugins that don't specify it
+    afterEvaluate {
+        if (project.hasProperty('android') && 
+            project.android.hasProperty('namespace') && 
+            project.android.namespace == null) {
+            
+            // For plugins that don't define their namespace, set a default one based on their name
+            project.android.namespace = "io.flutter.plugins.${project.name}"
+        }
+    }
 }
+
 subprojects {
     project.evaluationDependsOn(":app")
 }

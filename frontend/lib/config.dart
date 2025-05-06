@@ -5,8 +5,8 @@ class AppConfig {
   // Get the appropriate base URL based on platform
   static String get apiUrl {
     if (kIsWeb) {
-      // For web, use relative URL
-      return '';
+      // For web, use the actual backend URL
+      return 'http://localhost:3000';
     } else if (Platform.isAndroid) {
       // For Android emulator, 10.0.2.2 points to the host machine's localhost
       return 'http://10.0.2.2:3000';

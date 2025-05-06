@@ -4,17 +4,17 @@ import { Transform } from 'class-transformer';
 
 export class CreateUserDto {
     @IsString()
-    nom: string;
+    lastName: string;
 
     @IsString()
-    prenom: string;
+    firstName: string;
 
     @IsEmail()
     email: string;
 
     @IsString()
     @MinLength(6)
-    mot_de_passe: string;
+    password: string;
 
     @IsNumber()
     @Min(12)
@@ -23,14 +23,14 @@ export class CreateUserDto {
 
     @IsOptional()
     @IsNumber()
-    hauteur?: number;
+    height?: number;
 
     @IsOptional()
     @IsNumber()
-    poids?: number;
+    weight?: number;
 
     @IsString()
-    sexe: string;
+    gender: string;
 
     @IsOptional()
     @IsEnum(Role, { message: 'Role must be CLIENT, COACH, or ADMIN' })

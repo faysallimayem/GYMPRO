@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { IsNotEmpty, IsNumber, IsString, IsOptional } from "class-validator";
 
 export class CreateNutritionDto {
     @ApiProperty({example:'Chicken'})
@@ -17,7 +17,6 @@ export class CreateNutritionDto {
     @IsNotEmpty()
     calories: number;
 
-
     @ApiProperty({example: 10, description: 'Fat per 100g'})
     @IsNumber()
     @IsNotEmpty()
@@ -30,5 +29,15 @@ export class CreateNutritionDto {
 
     @ApiProperty({example: 'https://example.com/image.jpg', description: 'Image URL'})
     @IsString()
+    @IsOptional()
     imageUrl: string;
-  }
+
+    @ApiProperty({
+      example: 'ProteinSource', 
+      description: 'Food category',
+      enum: ['ProteinSource', 'CarbSource', 'FatSource', 'Fruit', 'Vegetable', 'Dairy', 'Beverage', 'Other']
+    })
+    @IsString()
+    @IsOptional()
+    category: string;
+}

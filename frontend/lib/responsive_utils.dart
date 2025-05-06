@@ -41,15 +41,15 @@ class ResponsiveUtils {
   /// Calculate font size based on device type and base size
   static double responsiveFontSize(BuildContext context, double baseFontSize) {
     final deviceType = getDeviceType(context);
-    final scaleFactor = MediaQuery.of(context).textScaleFactor;
+    final textScaler = MediaQuery.of(context).textScaler;
     
     switch (deviceType) {
       case DeviceType.mobile:
-        return baseFontSize * scaleFactor;
+        return textScaler.scale(baseFontSize);
       case DeviceType.tablet:
-        return (baseFontSize + 2) * scaleFactor;
+        return textScaler.scale(baseFontSize + 2);
       case DeviceType.desktop:
-        return (baseFontSize + 4) * scaleFactor;
+        return textScaler.scale(baseFontSize + 4);
     }
   }
   
@@ -148,11 +148,11 @@ class ResponsiveLayout extends StatelessWidget {
   final Widget? desktop;
 
   const ResponsiveLayout({
-    Key? key,
+    super.key,
     required this.mobile,
     this.tablet,
     this.desktop,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
