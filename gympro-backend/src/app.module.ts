@@ -20,11 +20,6 @@ import { Supplement } from './supplement/supplement.entity';
 import { ChatModule } from './chat/chat.module';
 import { Conversation } from './chat/conversation.entity';
 import { Message } from './chat/message.entity';
-import { FavoritesModule } from './favorites/favorites.module';
-import { FavoriteExercise, FavoriteWorkout } from './favorites/favorite.entity';
-import { Meal } from './nutrition/meal.entity';
-import { MealItem } from './nutrition/meal-item.entity';
-
 
 
 
@@ -40,13 +35,10 @@ import { MealItem } from './nutrition/meal-item.entity';
       username: process.env.DB_USERNAME || 'postgres',
       password: process.env.DB_PASSWORD || 'faysallimayem123',
       database: process.env.DB_NAME || 'gympro_db',
-
-
       logging: true,
-      entities: [User,Exercise,Workout,Nutrition,Subscription,Supplement,Conversation,Message,FavoriteExercise, FavoriteWorkout, Meal, MealItem], 
+      entities: [User,Exercise,Workout,Nutrition,Subscription,Supplement,Conversation,Message], 
       synchronize: true, 
-    }), UserModule, AuthModule, ExerciseModule, WorkoutModule, NutritionModule, SubscriptionModule, SupplementModule, ChatModule,FavoritesModule
-
+    }), UserModule, AuthModule, ExerciseModule, WorkoutModule, NutritionModule, SubscriptionModule, SupplementModule, ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
