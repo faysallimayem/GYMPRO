@@ -1,19 +1,24 @@
 import { DataSource } from 'typeorm';
 import { User } from './user/user.entity'; 
-import { Workout } from './workout/workout.entity';
 import { Exercise } from './exercise/exercise.entity';
+import { Workout } from './workout/workout.entity';
 import { Nutrition } from './nutrition/nutrition.entity';
+import { Supplement } from './supplement/supplement.entity';
+import { Subscription } from './subscription/subscription.entity';
+import { Message } from './chat/message.entity';
+import { Conversation } from './chat/conversation.entity';
 import { Meal } from './nutrition/meal.entity';
 import { MealItem } from './nutrition/meal-item.entity';
 
+
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: 'localhost',
-  port: 5432,
-  username: 'postgres',
-  password: 'mM112233445566!!', // Updated password to match the one used in the PostgreSQL server
-  database: 'gympro_db',
-  entities: [User, Workout, Exercise, Nutrition, Meal, MealItem],  // Add all your entity files
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT || '5432'),
+  username: process.env.DB_USERNAME || 'postgres',
+  password: process.env.DB_PASSWORD || 'mM112233445566!!', 
+  database: process.env.DB_NAME || 'gympro_db',
+  entities: [User,Exercise,Workout,Nutrition,Supplement,Subscription,Message,Conversation,Meal,MealItem],  // Add all your entity files
   synchronize: true, // Set to false in production
   logging: true,
 });

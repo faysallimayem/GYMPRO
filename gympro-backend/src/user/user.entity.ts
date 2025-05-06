@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, TableInheritance } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, TableInheritance, OneToMany } from 'typeorm';
 import { Role } from './role.enum';
+import { Subscription } from 'src/subscription/subscription.entity';
 
 @Entity('user') 
  
@@ -30,6 +31,9 @@ export class User {
 
     @Column({ name: 'sexe' })
     gender: string;
+
+    @OneToMany(() => Subscription, (subscription) => subscription.user)
+    subscriptions: Subscription[];
 
     @Column({
         type: 'enum',

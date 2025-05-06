@@ -12,10 +12,20 @@ import { Exercise } from './exercise/exercise.entity';
 import { Workout } from './workout/workout.entity';
 import { NutritionModule } from './nutrition/nutrition.module';
 import { Nutrition } from './nutrition/nutrition.entity';
+
+import { SubscriptionModule } from './subscription/subscription.module';
+import { Subscription } from './subscription/subscription.entity';
+import { SupplementModule } from './supplement/supplement.module';
+import { Supplement } from './supplement/supplement.entity';
+import { ChatModule } from './chat/chat.module';
+import { Conversation } from './chat/conversation.entity';
+import { Message } from './chat/message.entity';
 import { FavoritesModule } from './favorites/favorites.module';
 import { FavoriteExercise, FavoriteWorkout } from './favorites/favorite.entity';
 import { Meal } from './nutrition/meal.entity';
 import { MealItem } from './nutrition/meal-item.entity';
+
+
 
 
 @Module({
@@ -26,13 +36,17 @@ import { MealItem } from './nutrition/meal-item.entity';
     TypeOrmModule.forRoot({
       type: 'postgres', 
       host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '5432', 10),
-      username: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'mM112233445566!!',
+      port: parseInt(process.env.DB_PORT || '5432'),
+      username: process.env.DB_USERNAME || 'postgres',
+      password: process.env.DB_PASSWORD || 'faysallimayem123',
       database: process.env.DB_NAME || 'gympro_db',
-      entities: [User, Exercise, Workout, Nutrition, FavoriteExercise, FavoriteWorkout, Meal, MealItem], 
+
+
+      logging: true,
+      entities: [User,Exercise,Workout,Nutrition,Subscription,Supplement,Conversation,Message,FavoriteExercise, FavoriteWorkout, Meal, MealItem], 
       synchronize: true, 
-    }), UserModule, AuthModule, ExerciseModule, WorkoutModule, NutritionModule, FavoritesModule,
+    }), UserModule, AuthModule, ExerciseModule, WorkoutModule, NutritionModule, SubscriptionModule, SupplementModule, ChatModule,FavoritesModule
+
   ],
   controllers: [AppController],
   providers: [AppService],
