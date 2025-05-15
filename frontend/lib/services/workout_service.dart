@@ -12,9 +12,10 @@ class WorkoutService extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   List<Map<String, dynamic>> _favoriteWorkouts = [];
-  List<Map<String, dynamic>> _favoriteExercises = []; // Added favorite exercises list
+  List<Map<String, dynamic>> _favoriteExercises =
+      []; // Added favorite exercises list
   List<Map<String, dynamic>> _workoutsByMuscleGroup = [];
-  
+
   // Use the same token key as AuthService
   static const String _tokenKey = 'auth_token';
 
@@ -24,8 +25,10 @@ class WorkoutService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   List<Map<String, dynamic>> get favoriteWorkouts => _favoriteWorkouts;
-  List<Map<String, dynamic>> get favoriteExercises => _favoriteExercises; // Exercise favorites getter
-  List<Map<String, dynamic>> get workoutsByMuscleGroup => _workoutsByMuscleGroup;
+  List<Map<String, dynamic>> get favoriteExercises =>
+      _favoriteExercises; // Exercise favorites getter
+  List<Map<String, dynamic>> get workoutsByMuscleGroup =>
+      _workoutsByMuscleGroup;
 
   // Initialize favorites when app starts
   Future<void> initFavorites() async {
@@ -33,7 +36,7 @@ class WorkoutService extends ChangeNotifier {
       // Only initialize if user is logged in (has a token)
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(_tokenKey); // Use consistent key
-      
+
       if (token != null) {
         // If logged in, load favorites from server
         await fetchFavoriteExercises();
@@ -43,7 +46,7 @@ class WorkoutService extends ChangeNotifier {
       print('Error initializing favorites: $e');
     }
   }
-  
+
   // Fetch all workouts from the API
   Future<void> fetchWorkouts() async {
     _isLoading = true;
@@ -63,7 +66,7 @@ class WorkoutService extends ChangeNotifier {
       }
 
       final response = await _apiService.get('workouts', token: token);
-      
+
       if (response is List) {
         _workouts = _convertToMapList(response);
       } else if (response is Map<String, dynamic>) {
@@ -76,11 +79,11 @@ class WorkoutService extends ChangeNotifier {
       } else {
         _workouts = [];
       }
-      
+
       // Fetch favorite workouts and exercises from server
       await fetchFavoriteWorkouts();
       await fetchFavoriteExercises();
-      
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -90,20 +93,21 @@ class WorkoutService extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Fetch favorite exercises from the server
   Future<void> fetchFavoriteExercises() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(_tokenKey); // Use consistent key
-      
+
       if (token == null) {
         print('Token is null, cannot fetch favorite exercises');
         return;
       }
-      
-      final response = await _apiService.get('favorites/exercises', token: token);
-      
+
+      final response =
+          await _apiService.get('favorites/exercises', token: token);
+
       if (response is List) {
         _favoriteExercises = _convertToMapList(response);
       } else if (response is Map<String, dynamic>) {
@@ -115,27 +119,28 @@ class WorkoutService extends ChangeNotifier {
       } else {
         _favoriteExercises = [];
       }
-      
+
       notifyListeners();
     } catch (e) {
       print('Error fetching favorite exercises: $e');
       // Keep existing favorites in case of error
     }
   }
-  
+
   // Fetch favorite workouts from the server
   Future<void> fetchFavoriteWorkouts() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(_tokenKey); // Use consistent key
-      
+
       if (token == null) {
         print('Token is null, cannot fetch favorite workouts');
         return;
       }
-      
-      final response = await _apiService.get('favorites/workouts', token: token);
-      
+
+      final response =
+          await _apiService.get('favorites/workouts', token: token);
+
       if (response is List) {
         _favoriteWorkouts = _convertToMapList(response);
       } else if (response is Map<String, dynamic>) {
@@ -147,7 +152,7 @@ class WorkoutService extends ChangeNotifier {
       } else {
         _favoriteWorkouts = [];
       }
-      
+
       notifyListeners();
     } catch (e) {
       print('Error fetching favorite workouts: $e');
@@ -183,10 +188,10 @@ class WorkoutService extends ChangeNotifier {
       }
 
       await _apiService.post('workouts', workoutData, token: token);
-      
+
       // Add the new workout to the list
       await fetchWorkouts(); // Refresh the list after adding
-      
+
       _isLoading = false;
       notifyListeners();
       return true;
@@ -219,10 +224,10 @@ class WorkoutService extends ChangeNotifier {
       }
 
       final response = await _apiService.get('workouts/$id', token: token);
-      _selectedWorkout = response is Map<String, dynamic> 
-          ? response 
+      _selectedWorkout = response is Map<String, dynamic>
+          ? response
           : {'error': 'Invalid response format'};
-      
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -232,27 +237,29 @@ class WorkoutService extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Add a workout to favorites (using server API)
   Future<void> addToFavorites(Map<String, dynamic> workout) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(_tokenKey); // Use consistent key
-      
+
       if (token == null) {
         print('Token is null, cannot add to favorites');
         return;
       }
-      
+
       // Check if already in favorites to avoid duplicates
       if (!_favoriteWorkouts.any((w) => w['id'] == workout['id'])) {
         // Optimistically add to local list first for responsive UI
         _favoriteWorkouts.add(workout);
         notifyListeners();
-        
+
         // Then update on server
-        await _apiService.post('favorites/workouts', {'workoutId': workout['id']}, token: token);
-        
+        await _apiService.post(
+            'favorites/workouts', {'workoutId': workout['id']},
+            token: token);
+
         // Refresh favorites from server
         await fetchFavoriteWorkouts();
       }
@@ -263,23 +270,22 @@ class WorkoutService extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Remove a workout from favorites (using server API)
   Future<void> removeFromFavorites(int workoutId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(_tokenKey); // Use consistent key
-      
+
       if (token == null) {
         print('Token is null, cannot remove from favorites');
         return;
       }
-      
+
       // Optimistically remove from local list first for responsive UI
-      final removedWorkout = _favoriteWorkouts.firstWhere((w) => w['id'] == workoutId, orElse: () => <String, dynamic>{});
       _favoriteWorkouts.removeWhere((w) => w['id'] == workoutId);
       notifyListeners();
-      
+
       // Then update on server
       await _apiService.delete('favorites/workouts/$workoutId', token: token);
     } catch (e) {
@@ -294,20 +300,22 @@ class WorkoutService extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(_tokenKey); // Use consistent key
-      
+
       if (token == null) {
         print('Token is null, cannot add to favorites');
         return;
       }
-      
+
       if (!isExerciseFavorite(exercise)) {
         // Optimistically add to local list first for responsive UI
         _favoriteExercises.add(exercise);
         notifyListeners();
-        
+
         // Then update on server
-        await _apiService.post('favorites/exercises', {'exerciseId': exercise['id']}, token: token);
-        
+        await _apiService.post(
+            'favorites/exercises', {'exerciseId': exercise['id']},
+            token: token);
+
         // Refresh favorites from server
         await fetchFavoriteExercises();
       }
@@ -318,29 +326,30 @@ class WorkoutService extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Remove an exercise from favorites (using server API)
-  Future<void> removeExerciseFromFavorites(Map<String, dynamic> exercise) async {
+  Future<void> removeExerciseFromFavorites(
+      Map<String, dynamic> exercise) async {
     final exerciseId = exercise['id'];
-    
+
     if (exerciseId == null) {
       print('Exercise ID is null, cannot remove from favorites');
       return;
     }
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(_tokenKey); // Use consistent key
-      
+
       if (token == null) {
         print('Token is null, cannot remove from favorites');
         return;
       }
-      
+
       // Optimistically remove from local list first
       _favoriteExercises.removeWhere((e) => e['id'] == exerciseId);
       notifyListeners();
-      
+
       // Then update on server
       await _apiService.delete('favorites/exercises/$exerciseId', token: token);
     } catch (e) {
@@ -360,15 +369,15 @@ class WorkoutService extends ChangeNotifier {
       return true;
     }
   }
-  
+
   // Check if an exercise is a favorite
   bool isExerciseFavorite(Map<String, dynamic> exercise) {
     final exerciseId = exercise['id'];
-    
+
     if (exerciseId == null) {
       return false;
     }
-    
+
     return _favoriteExercises.any((e) => e['id'] == exerciseId);
   }
 
@@ -403,15 +412,15 @@ class WorkoutService extends ChangeNotifier {
       }
 
       await _apiService.patch('workouts/$id', workoutData, token: token);
-      
+
       // Refresh the workout list after updating
       await fetchWorkouts();
-      
+
       // If the updated workout is the currently selected one, refresh it
       if (_selectedWorkout != null && _selectedWorkout!['id'] == id) {
         await getWorkoutDetails(id);
       }
-      
+
       _isLoading = false;
       notifyListeners();
       return true;
@@ -444,20 +453,20 @@ class WorkoutService extends ChangeNotifier {
       }
 
       await _apiService.delete('workouts/$id', token: token);
-      
+
       // Remove the workout from the list
       _workouts.removeWhere((workout) => workout['id'] == id);
-      
+
       // If the deleted workout is in favorites, remove it
       if (_favoriteWorkouts.any((w) => w['id'] == id)) {
         await removeFromFavorites(id);
       }
-      
+
       // If the deleted workout is the currently selected one, clear the selection
       if (_selectedWorkout != null && _selectedWorkout!['id'] == id) {
         _selectedWorkout = null;
       }
-      
+
       _isLoading = false;
       notifyListeners();
       return true;
@@ -472,14 +481,14 @@ class WorkoutService extends ChangeNotifier {
 
   // Fetch workouts by muscle group
   Future<void> fetchWorkoutsByMuscleGroup(String muscleGroup) async {
-    // Existing code...
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      print('WorkoutService: Starting to fetch workouts for muscle group: $muscleGroup');
-      
+      print(
+          'WorkoutService: Starting to fetch workouts for muscle group: $muscleGroup');
+
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(_tokenKey); // Use consistent key
 
@@ -492,59 +501,84 @@ class WorkoutService extends ChangeNotifier {
       }
 
       print('WorkoutService: Token available, proceeding with API call');
-      
+
       try {
-        print('WorkoutService: Making API call to: workouts/muscle-group/$muscleGroup');
-        final response = await _apiService.get('workouts/muscle-group/$muscleGroup', token: token);
+        print(
+            'WorkoutService: Making API call to: exercises/muscle-group/$muscleGroup');
+        final response = await _apiService
+            .get('exercises/muscle-group/$muscleGroup', token: token);
         print('WorkoutService: Raw API response: $response');
         print('WorkoutService: Response type: ${response.runtimeType}');
 
         if (response is List) {
-          _workoutsByMuscleGroup = _convertToMapList(response);
-          print('WorkoutService: Converted response to list of ${_workoutsByMuscleGroup.length} workouts');
-          
-          if (_workoutsByMuscleGroup.isNotEmpty) {
-            print('WorkoutService: First workout details:');
-            print('- Name: ${_workoutsByMuscleGroup[0]['name']}');
-            print('- ID: ${_workoutsByMuscleGroup[0]['id']}');
-            print('- Exercise count: ${_workoutsByMuscleGroup[0]['exercises']?.length ?? 0}');
-            
-            if (_workoutsByMuscleGroup[0]['exercises'] != null) {
-              final exercises = _workoutsByMuscleGroup[0]['exercises'] as List;
-              print('- First exercise: ${exercises.isNotEmpty ? exercises[0] : 'No exercises'}');
-            }
-            
-            // Set the first workout as selected
-            _selectedWorkout = _workoutsByMuscleGroup[0];
-            print('WorkoutService: Set selected workout to: ${_selectedWorkout!['name']}');
+          // Convert the list of exercises into a format similar to a workout
+          print(
+              'WorkoutService: Received ${response.length} exercises for muscle group: $muscleGroup');
+
+          // Create a synthetic workout with all the exercises
+          final allExercises = _convertToMapList(response);
+
+          if (allExercises.isNotEmpty) {
+            Map<String, dynamic> muscleGroupWorkout = {
+              'id': 0, // Synthetic ID
+              'name':
+                  '${muscleGroup.substring(0, 1).toUpperCase()}${muscleGroup.substring(1)} Exercises',
+              'description': 'All $muscleGroup exercises',
+              'exercises': allExercises,
+              'duration': allExercises.length *
+                  2, // Estimate duration based on exercise count
+            };
+
+            _workoutsByMuscleGroup = [muscleGroupWorkout];
+            _selectedWorkout = muscleGroupWorkout;
+            print(
+                'WorkoutService: Created synthetic workout with ${allExercises.length} exercises');
           } else {
-            print('WorkoutService: No workouts found in the response');
+            print(
+                'WorkoutService: No exercises found for muscle group: $muscleGroup');
+            _workoutsByMuscleGroup = [];
+            _error = 'No exercises found for this muscle group';
           }
         } else if (response is Map<String, dynamic>) {
           print('WorkoutService: Response is a Map, checking structure...');
           if (response.containsKey('data') && response['data'] is List) {
             print('WorkoutService: Found data array in response');
-            _workoutsByMuscleGroup = _convertToMapList(response['data'] as List);
+
+            final allExercises = _convertToMapList(response['data'] as List);
+
+            if (allExercises.isNotEmpty) {
+              Map<String, dynamic> muscleGroupWorkout = {
+                'id': 0, // Synthetic ID
+                'name':
+                    '${muscleGroup.substring(0, 1).toUpperCase()}${muscleGroup.substring(1)} Exercises',
+                'description': 'All $muscleGroup exercises',
+                'exercises': allExercises,
+                'duration': allExercises.length *
+                    2, // Estimate duration based on exercise count
+              };
+
+              _workoutsByMuscleGroup = [muscleGroupWorkout];
+              _selectedWorkout = muscleGroupWorkout;
+              print(
+                  'WorkoutService: Created synthetic workout with ${allExercises.length} exercises from map data');
+            } else {
+              _workoutsByMuscleGroup = [];
+              print('WorkoutService: No exercises found in data array');
+            }
           } else {
-            print('WorkoutService: Single workout in response, converting to list');
-            _workoutsByMuscleGroup = [Map<String, dynamic>.from(response)];
-          }
-          
-          if (_workoutsByMuscleGroup.isNotEmpty) {
-            _selectedWorkout = _workoutsByMuscleGroup[0];
-            print('WorkoutService: Set selected workout from map response');
+            print('WorkoutService: Unexpected response format: $response');
+            _workoutsByMuscleGroup = [];
+            _error = 'Failed to load exercise data from server';
           }
         } else {
-          print('WorkoutService: Unexpected response format: ${response.runtimeType}');
+          print(
+              'WorkoutService: Unexpected response format: ${response.runtimeType}');
           _workoutsByMuscleGroup = [];
-          // IMPORTANT: Don't create sample data here - show empty state instead
-          _error = 'Failed to load workout data from server';
+          _error = 'Failed to load exercise data from server';
         }
-
       } catch (e) {
         print('WorkoutService: API call failed: $e');
-        _error = 'Failed to fetch workout data: ${e.toString()}';
-        // Don't create sample workouts here - we want to see the actual error
+        _error = 'Failed to fetch exercise data: ${e.toString()}';
         rethrow;
       }
 
@@ -563,7 +597,7 @@ class WorkoutService extends ChangeNotifier {
     _workoutsByMuscleGroup = [];
     notifyListeners();
   }
-  
+
   // Set selected workout
   void setSelectedWorkout(Map<String, dynamic> workout) {
     _selectedWorkout = workout;

@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config.dart';
@@ -7,17 +5,19 @@ import '../config.dart';
 class ApiService {
   final String baseUrl = AppConfig.apiUrl;
 
-  Future<dynamic> post(String endpoint, Map<String, dynamic> data, {String? token}) async {
+  Future<dynamic> post(String endpoint, Map<String, dynamic> data,
+      {String? token}) async {
     try {
-      // Print the full URL for debugging
-      final url = '$baseUrl/$endpoint';
+      // Fix the URL construction to avoid double slashes
+      final url =
+          endpoint.startsWith('/') ? '$baseUrl$endpoint' : '$baseUrl/$endpoint';
       print('Making POST request to: $url');
-      
+
       final headers = {
         'Content-Type': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
       };
-      
+
       final response = await http.post(
         Uri.parse(url),
         headers: headers,
@@ -61,16 +61,18 @@ class ApiService {
     } catch (e) {
       if (e is ApiException) rethrow;
       // Handle network errors
-      throw ApiException(statusCode: 0, message: 'Network error: ${e.toString()}');
+      throw ApiException(
+          statusCode: 0, message: 'Network error: ${e.toString()}');
     }
   }
 
   Future<dynamic> get(String endpoint, {String? token}) async {
     try {
-      // Print the full URL for debugging
-      final url = '$baseUrl/$endpoint';
+      // Fix the URL construction to avoid double slashes
+      final url =
+          endpoint.startsWith('/') ? '$baseUrl$endpoint' : '$baseUrl/$endpoint';
       print('Making GET request to: $url');
-      
+
       final headers = {
         'Content-Type': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
@@ -118,21 +120,25 @@ class ApiService {
     } catch (e) {
       if (e is ApiException) rethrow;
       // Handle network errors
-      throw ApiException(statusCode: 0, message: 'Network error: ${e.toString()}');
+      throw ApiException(
+          statusCode: 0, message: 'Network error: ${e.toString()}');
     }
   }
-  
+
   // Add patch method
-  Future<dynamic> patch(String endpoint, Map<String, dynamic> data, {String? token}) async {
+  Future<dynamic> patch(String endpoint, Map<String, dynamic> data,
+      {String? token}) async {
     try {
-      final url = '$baseUrl/$endpoint';
+      // Fix the URL construction to avoid double slashes
+      final url =
+          endpoint.startsWith('/') ? '$baseUrl$endpoint' : '$baseUrl/$endpoint';
       print('Making PATCH request to: $url');
-      
+
       final headers = {
         'Content-Type': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
       };
-      
+
       final response = await http.patch(
         Uri.parse(url),
         headers: headers,
@@ -170,21 +176,24 @@ class ApiService {
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException(statusCode: 0, message: 'Network error: ${e.toString()}');
+      throw ApiException(
+          statusCode: 0, message: 'Network error: ${e.toString()}');
     }
   }
-  
+
   // Add delete method
   Future<dynamic> delete(String endpoint, {String? token}) async {
     try {
-      final url = '$baseUrl/$endpoint';
+      // Fix the URL construction to avoid double slashes
+      final url =
+          endpoint.startsWith('/') ? '$baseUrl$endpoint' : '$baseUrl/$endpoint';
       print('Making DELETE request to: $url');
-      
+
       final headers = {
         'Content-Type': 'application/json',
         if (token != null) 'Authorization': 'Bearer $token',
       };
-      
+
       final response = await http.delete(
         Uri.parse(url),
         headers: headers,
@@ -195,7 +204,9 @@ class ApiService {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         try {
-          return response.body.isNotEmpty ? json.decode(response.body) : {'message': 'Operation successful'};
+          return response.body.isNotEmpty
+              ? json.decode(response.body)
+              : {'message': 'Operation successful'};
         } catch (e) {
           if (response.body.isEmpty) {
             return {'message': 'Operation successful'};
@@ -221,7 +232,8 @@ class ApiService {
       }
     } catch (e) {
       if (e is ApiException) rethrow;
-      throw ApiException(statusCode: 0, message: 'Network error: ${e.toString()}');
+      throw ApiException(
+          statusCode: 0, message: 'Network error: ${e.toString()}');
     }
   }
 }

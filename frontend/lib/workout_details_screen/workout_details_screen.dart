@@ -9,12 +9,8 @@ import '../widgets.dart';
 class WorkoutDetailsScreen extends StatefulWidget {
   final int? workoutId;
   final String? queryFilter;
-  
-  const WorkoutDetailsScreen({
-    super.key, 
-    this.workoutId, 
-    this.queryFilter
-  });
+
+  const WorkoutDetailsScreen({super.key, this.workoutId, this.queryFilter});
 
   @override
   State<WorkoutDetailsScreen> createState() => _WorkoutDetailsScreenState();
@@ -32,12 +28,13 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
     super.initState();
     // Clear any previous data on initialization
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final workoutService = Provider.of<WorkoutService>(context, listen: false);
+      final workoutService =
+          Provider.of<WorkoutService>(context, listen: false);
       workoutService.clearMuscleGroupData();
       _loadContent();
     });
   }
-  
+
   void _loadContent() {
     // Check if values were passed directly in the constructor
     if (widget.queryFilter != null) {
@@ -53,7 +50,7 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
       _fetchWorkoutById(workoutId!);
       return;
     }
-    
+
     // If not found in constructor, check if argument was passed through route
     final argument = ModalRoute.of(context)?.settings.arguments;
     if (argument == null) {
@@ -64,10 +61,10 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
       });
       return;
     }
-    
+
     print('DEBUG: Received argument type: ${argument.runtimeType}');
     print('DEBUG: Received argument value: $argument');
-    
+
     // Handle different types of arguments
     if (argument is String) {
       // It's a muscle group
@@ -97,9 +94,10 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
   Future<void> _fetchWorkoutsForMuscleGroup(String muscleGroup) async {
     print('DEBUG: Fetching workouts for muscle group: $muscleGroup');
     try {
-      final workoutService = Provider.of<WorkoutService>(context, listen: false);
+      final workoutService =
+          Provider.of<WorkoutService>(context, listen: false);
       await workoutService.fetchWorkoutsByMuscleGroup(muscleGroup);
-      
+
       final workouts = workoutService.workoutsByMuscleGroup;
       print('DEBUG: Fetched ${workouts.length} workouts for $muscleGroup');
       if (workouts.isEmpty) {
@@ -109,15 +107,16 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
         if (workouts.isNotEmpty) {
           print('DEBUG: Setting selected workout to: ${workouts[0]['name']}');
           workoutService.setSelectedWorkout(workouts[0]);
-          
+
           // Check if this workout is a favorite
           if (workouts[0]['id'] != null) {
             isFavorite = workoutService.isInFavorites(workouts[0]['id']);
           }
         }
-        
+
         // Print first workout details for debugging
-        print('DEBUG: First workout: ${workouts[0]['name']}, exercises: ${workouts[0]['exercises']?.length ?? 0}');
+        print(
+            'DEBUG: First workout: ${workouts[0]['name']}, exercises: ${workouts[0]['exercises']?.length ?? 0}');
         final exercises = workouts[0]['exercises'];
         if (exercises != null && exercises is List) {
           print('DEBUG: Number of exercises: ${exercises.length}');
@@ -126,7 +125,7 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
           }
         }
       }
-      
+
       setState(() {
         isLoading = false;
       });
@@ -142,9 +141,10 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
   Future<void> _fetchWorkoutById(int workoutId) async {
     print('DEBUG: Fetching workout details for ID: $workoutId');
     try {
-      final workoutService = Provider.of<WorkoutService>(context, listen: false);
+      final workoutService =
+          Provider.of<WorkoutService>(context, listen: false);
       await workoutService.getWorkoutDetails(workoutId);
-      
+
       final workout = workoutService.selectedWorkout;
       if (workout != null) {
         print('DEBUG: Successfully fetched workout: ${workout['name']}');
@@ -152,7 +152,7 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
       } else {
         print('WARN: No workout found with ID: $workoutId');
       }
-      
+
       setState(() {
         isLoading = false;
       });
@@ -165,52 +165,34 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
     }
   }
 
-  void _toggleFavorite(Map<String, dynamic> workout) {
-    setState(() {
-      final workoutService = Provider.of<WorkoutService>(context, listen: false);
-      final bool isFavorite = workoutService.isInFavorites(workout['id']);
-      
-      if (isFavorite) {
-        workoutService.removeFromFavorites(workout['id']);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Removed from favorites')),
-        );
-      } else {
-        workoutService.addToFavorites(workout);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Added to favorites')),
-        );
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     final workoutService = Provider.of<WorkoutService>(context);
     final selectedWorkout = workoutService.selectedWorkout;
-    
+
     // Use MediaQuery to adjust layout based on screen size
     final screenWidth = MediaQuery.of(context).size.width;
     final horizontalPadding = screenWidth < 600 ? 12.0 : 24.0;
-    
+
     return Scaffold(
       backgroundColor: appTheme.whiteA700,
       appBar: _buildAppBar(context),
       body: SafeArea(
-        child: selectedWorkout == null 
-          ? Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildExerciseSummary(context, selectedWorkout),
-                  SizedBox(height: 16.h),
-                  _buildExerciseList(context, selectedWorkout),
-                  SizedBox(height: 24.h), // Added bottom padding for scroll
-                ],
+        child: selectedWorkout == null
+            ? Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildExerciseSummary(context, selectedWorkout),
+                    SizedBox(height: 16.h),
+                    _buildExerciseList(context, selectedWorkout),
+                    SizedBox(height: 24.h), // Added bottom padding for scroll
+                  ],
+                ),
               ),
-            ),
       ),
       floatingActionButton: selectedWorkout == null
           ? null
@@ -242,8 +224,9 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
   /// Section Widget
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     final workoutService = Provider.of<WorkoutService>(context, listen: false);
-    final workoutName = workoutService.selectedWorkout?['name'] ?? 'Workout Details';
-    
+    final workoutName =
+        workoutService.selectedWorkout?['name'] ?? 'Workout Details';
+
     return CustomAppBar(
       height: 46.h,
       title: Padding(
@@ -276,11 +259,12 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
   }
 
   /// Section Widget
-  Widget _buildExerciseSummary(BuildContext context, Map<String, dynamic> workout) {
+  Widget _buildExerciseSummary(
+      BuildContext context, Map<String, dynamic> workout) {
     final exercises = (workout['exercises'] as List?)?.length ?? 0;
     final duration = workout['duration'] ?? 0;
     final calories = workout['calories'] ?? 0;
-    
+
     return Container(
       margin: EdgeInsetsDirectional.only(end: 2.h),
       padding: EdgeInsetsDirectional.symmetric(horizontal: 2.h),
@@ -303,9 +287,10 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
   }
 
   /// Section Widget
-  Widget _buildExerciseList(BuildContext context, Map<String, dynamic> workout) {
+  Widget _buildExerciseList(
+      BuildContext context, Map<String, dynamic> workout) {
     print('WorkoutDetailsScreen: Building exercise list');
-    
+
     if (workout.isEmpty) {
       print('WorkoutDetailsScreen: No workout available for exercise list');
       return Center(
@@ -322,9 +307,9 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
     // Get the selected workout from the service
     final workoutService = Provider.of<WorkoutService>(context, listen: false);
     final selectedWorkout = workoutService.selectedWorkout;
-    
+
     print('WorkoutDetailsScreen: Selected workout: $selectedWorkout');
-    
+
     if (selectedWorkout == null) {
       print('WorkoutDetailsScreen: No workout selected');
       return Center(
@@ -339,8 +324,9 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
     }
 
     final exercises = selectedWorkout['exercises'] as List? ?? [];
-    print('WorkoutDetailsScreen: Number of exercises found: ${exercises.length}');
-    
+    print(
+        'WorkoutDetailsScreen: Number of exercises found: ${exercises.length}');
+
     if (exercises.isEmpty) {
       print('WorkoutDetailsScreen: No exercises in selected workout');
       return Center(
@@ -369,13 +355,14 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
           ),
           // Display exercises from the selected workout
           ...exercises.map((exercise) {
-            print('WorkoutDetailsScreen: Processing exercise: ${exercise['name']}');
+            print(
+                'WorkoutDetailsScreen: Processing exercise: ${exercise['name']}');
             // Convert exercise to Map if it's not already
             Map<String, dynamic> exerciseMap = {};
             if (exercise is Map) {
               exerciseMap = Map<String, dynamic>.from(exercise);
             }
-            
+
             return Padding(
               padding: EdgeInsets.only(bottom: 10.h),
               child: ExerciselistItem(
@@ -395,102 +382,16 @@ class _WorkoutDetailsScreenState extends State<WorkoutDetailsScreen> {
   }
 
   void _navigateToExerciseExplication(Map<String, dynamic> exercise) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ExerciceExplicationScreen(exercise: exercise),
-      )
-    );
-  }
-
-  /// Section Widget
-  Widget _buildStartWorkoutButton(BuildContext context) {
-    return Consumer<WorkoutService>(
-      builder: (context, workoutService, child) {
-        final workout = workoutService.selectedWorkout;
-        final exercises = workout?['exercises'] as List? ?? [];
-        
-        return Container(
-          width: double.maxFinite,
-          padding: EdgeInsetsDirectional.symmetric(
-            horizontal: 42.h,
-            vertical: 12.h,
-          ),
-          decoration: AppDecoration.outlineGray,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CustomElevatedButton(
-                height: 60.h,
-                text: "Start Workout",
-                margin: EdgeInsetsDirectional.only(end: 14.h),
-                buttonStyle: CustomButtonStyles.fillOrangeA,
-                buttonTextStyle: CustomTextStyles.headlineSmallWhiteA700,
-                onPressed: exercises.isEmpty 
-                    ? null
-                    : () => _startWorkout(exercises),
-              )
-            ],
-          ),
-        );
-      }
-    );
-  }
-  
-  void _startWorkout(List<dynamic> exercises) {
-    if (exercises.isNotEmpty) {
-      // Navigate to the first exercise using MaterialPageRoute
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => ExerciceExplicationScreen(
-            exercise: exercises[0],
-            workoutExercises: exercises,
-            currentExerciseIndex: 0,
-            isWorkoutMode: true,
-          ),
-        )
-      );
-    }
-  }
-
-  Widget _buildHeaderSection(BuildContext context, List<Map<String, dynamic>> workouts) {
-    final workoutService = Provider.of<WorkoutService>(context, listen: false);
-    final selectedWorkout = workoutService.selectedWorkout;
-    
-    if (selectedWorkout == null) {
-      return SizedBox.shrink();
-    }
-
-    final exercises = selectedWorkout['exercises']?.length ?? 0;
-    final duration = selectedWorkout['duration'] ?? 0;
-    final calories = selectedWorkout['calories'] ?? 0;
-
-    return Column(
-      children: [
-        CustomImageView(
-          imagePath: ImageConstant.imgRectangle211,
-          height: 250.h,
-          width: double.maxFinite,
-          radius: BorderRadius.circular(12.h),
-        ),
-        SizedBox(height: 20.h),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ExercisesummaryItem(value: exercises, label: "Exercises"),
-            ExercisesummaryItem(value: duration, label: "Minutes"),
-            ExercisesummaryItem(value: calories, label: "Calories"),
-          ],
-        ),
-      ],
-    );
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => ExerciceExplicationScreen(exercise: exercise),
+    ));
   }
 }
 
 class ExercisesummaryItem extends StatelessWidget {
   final int value;
   final String label;
-  
+
   const ExercisesummaryItem({
     super.key,
     required this.value,
@@ -549,30 +450,74 @@ class ExerciselistItem extends StatelessWidget {
     final description = exercise['description'] ?? 'No description';
     final sets = exercise['sets'] ?? exercise['defaultSets'] ?? 4;
     final reps = exercise['reps'] ?? exercise['defaultReps'] ?? 12;
-    
+
     // Check if exercise is a favorite
     final workoutService = Provider.of<WorkoutService>(context, listen: true);
     final isFavorite = workoutService.isExerciseFavorite(exercise);
-    
-    // Select image based on muscle group
+    // Select image based on muscle group and exercise name
     String imagePath;
-    if (exercise['imageUrl'] != null && exercise['imageUrl'].toString().isNotEmpty) {
-      imagePath = exercise['imageUrl'];
-    } else if (exercise['videoUrl'] != null && exercise['videoUrl'].toString().isNotEmpty) {
-      imagePath = exercise['videoUrl'];
+    if (exercise['imageUrl'] != null &&
+        exercise['imageUrl'].toString().isNotEmpty) {
+      // Use our utility function to get a full URL for backend images
+      imagePath = getFullImageUrl(exercise['imageUrl']);
     } else {
-      // Use specific images based on muscle group
-      if (muscleGroup.contains('chest')) {
-        imagePath = ImageConstant.imgRectangle188;
-      } else if (muscleGroup.contains('leg')) {
-        imagePath = ImageConstant.imgRectangle190;
-      } else if (muscleGroup.contains('back') || muscleGroup.contains('shoulder')) {
-        imagePath = ImageConstant.imgRectangle194;
-      } else if (muscleGroup.contains('full')) {
-        imagePath = ImageConstant.imgRectangle192;
+      // First check by exercise name for more specific matches
+      final exerciseName = name.toLowerCase();
+
+      if (exerciseName.contains('pull-up') || exerciseName.contains('pullup')) {
+        imagePath =
+            'https://images.unsplash.com/photo-1598971639058-a4a678c30ed6?q=80';
+      } else if (exerciseName.contains('push') && exerciseName.contains('up')) {
+        imagePath =
+            'https://images.unsplash.com/photo-1598971639058-a4a678c30ed6?q=80';
+      } else if (exerciseName.contains('bench press') ||
+          exerciseName.contains('chest press')) {
+        imagePath =
+            'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80';
+      } else if (exerciseName.contains('squat')) {
+        imagePath =
+            'https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80';
+      } else if (exerciseName.contains('deadlift')) {
+        imagePath =
+            'https://images.unsplash.com/photo-1603287681836-b174ce5074c2?q=80';
+      } else if (exerciseName.contains('row')) {
+        imagePath =
+            'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80';
+      } else if (exerciseName.contains('curl')) {
+        imagePath =
+            'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?q=80';
+      } else if (exerciseName.contains('press') &&
+          (exerciseName.contains('shoulder') ||
+              exerciseName.contains('overhead'))) {
+        imagePath =
+            'https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?q=80';
       } else {
-        // Default image
-        imagePath = ImageConstant.imgImage84x98;
+        // Fall back to muscle group based images
+        if (muscleGroup.contains('chest')) {
+          imagePath =
+              'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80';
+        } else if (muscleGroup.contains('leg')) {
+          imagePath =
+              'https://images.unsplash.com/photo-1574680096145-d05b474e2155?q=80';
+        } else if (muscleGroup.contains('back')) {
+          imagePath =
+              'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80';
+        } else if (muscleGroup.contains('shoulder')) {
+          imagePath =
+              'https://images.unsplash.com/photo-1532029837206-abbe2b7620e3?q=80';
+        } else if (muscleGroup.contains('arm') ||
+            muscleGroup.contains('bicep') ||
+            muscleGroup.contains('tricep')) {
+          imagePath =
+              'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?q=80';
+        } else if (muscleGroup.contains('full')) {
+          imagePath =
+              'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80';
+        } else {
+          // Default image
+          imagePath =
+              'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80';
+        }
       }
     }
 
@@ -644,20 +589,19 @@ class ExerciselistItem extends StatelessWidget {
                 onTap: () async {
                   // Toggle favorite status when clicked
                   await workoutService.toggleExerciseFavorite(exercise);
-                  
+
                   // Show feedback to the user
-                  final isNowFavorite = workoutService.isExerciseFavorite(exercise);
+                  final isNowFavorite =
+                      workoutService.isExerciseFavorite(exercise);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(
-                        isNowFavorite 
-                            ? 'Added $name to favorites' 
-                            : 'Removed $name from favorites'
-                      ),
+                      content: Text(isNowFavorite
+                          ? 'Added $name to favorites'
+                          : 'Removed $name from favorites'),
                       duration: Duration(seconds: 1),
                     ),
                   );
-                  
+
                   // Call the provided onFavorite callback if available
                   if (onFavorite != null) {
                     onFavorite!();

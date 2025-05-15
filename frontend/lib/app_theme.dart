@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../app_utils.dart';
+import 'app_utils.dart'; // Fixed import path
 
 String _appTheme = "lightCode";
 LightCodeColors get appTheme => ThemeHelper().themeColor();
@@ -7,9 +7,12 @@ ThemeData get theme => ThemeHelper().themeData();
 
 // Adding direct color constants for easier access
 class AppTheme {
-  static const Color primaryColor = Color(0XFFF97316);  // Orange from colorScheme.primary
-  static const Color secondaryColor = Color(0XFF28A745);  // Green from appTheme.green600
-  static const Color backgroundColor = Color(0XFFFAFAFA);  // Light gray background
+  static const Color primaryColor =
+      Color(0XFFF97316); // Orange from colorScheme.primary
+  static const Color secondaryColor =
+      Color(0XFF28A745); // Green from appTheme.green600
+  static const Color backgroundColor =
+      Color(0XFFFAFAFA); // Light gray background
 }
 
 extension on TextStyle {

@@ -10,7 +10,8 @@ class FavoriteExercisesScreen extends StatefulWidget {
   const FavoriteExercisesScreen({super.key});
 
   @override
-  State<FavoriteExercisesScreen> createState() => _FavoriteExercisesScreenState();
+  State<FavoriteExercisesScreen> createState() =>
+      _FavoriteExercisesScreenState();
 }
 
 class _FavoriteExercisesScreenState extends State<FavoriteExercisesScreen> {
@@ -100,7 +101,8 @@ class _FavoriteExercisesScreenState extends State<FavoriteExercisesScreen> {
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) => ExerciceExplicationScreen(exercise: exercise),
+                    builder: (context) =>
+                        ExerciceExplicationScreen(exercise: exercise),
                   ),
                 );
               },
@@ -130,13 +132,16 @@ class FavoriteExerciseItem extends StatelessWidget {
     final muscleGroup = exercise['muscleGroup']?.toString().toLowerCase() ?? '';
     final description = exercise['description'] ?? 'No description';
     final sets = exercise['sets'] ?? exercise['defaultSets'] ?? 4;
-    final reps = exercise['reps'] ?? exercise['defaultReps'] ?? 12;
-
-    // Select image based on muscle group
+    final reps = exercise['reps'] ??
+        exercise['defaultReps'] ??
+        12; // Select image based on muscle group
     String imagePath;
-    if (exercise['imageUrl'] != null && exercise['imageUrl'].toString().isNotEmpty) {
-      imagePath = exercise['imageUrl'];
-    } else if (exercise['videoUrl'] != null && exercise['videoUrl'].toString().isNotEmpty) {
+    if (exercise['imageUrl'] != null &&
+        exercise['imageUrl'].toString().isNotEmpty) {
+      // Use our utility function to get a full URL for backend images
+      imagePath = getFullImageUrl(exercise['imageUrl']);
+    } else if (exercise['videoUrl'] != null &&
+        exercise['videoUrl'].toString().isNotEmpty) {
       imagePath = exercise['videoUrl'];
     } else {
       // Use specific images based on muscle group
@@ -144,7 +149,8 @@ class FavoriteExerciseItem extends StatelessWidget {
         imagePath = ImageConstant.imgRectangle188;
       } else if (muscleGroup.contains('leg')) {
         imagePath = ImageConstant.imgRectangle190;
-      } else if (muscleGroup.contains('back') || muscleGroup.contains('shoulder')) {
+      } else if (muscleGroup.contains('back') ||
+          muscleGroup.contains('shoulder')) {
         imagePath = ImageConstant.imgRectangle194;
       } else if (muscleGroup.contains('full')) {
         imagePath = ImageConstant.imgRectangle192;
@@ -208,7 +214,8 @@ class FavoriteExerciseItem extends StatelessWidget {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => ExerciceExplicationScreen(exercise: exercise),
+                        builder: (context) =>
+                            ExerciceExplicationScreen(exercise: exercise),
                       ),
                     );
                   },

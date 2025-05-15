@@ -17,6 +17,9 @@ class WorkoutsPage extends StatefulWidget {
 class _WorkoutsPageState extends State<WorkoutsPage> {
   bool isLoading = false;
   String? error;
+  // Add a refresh controller
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
 
   @override
   void initState() {
@@ -27,13 +30,24 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
     });
   }
 
+  // Combine fetchWorkouts and refreshWorkouts into one method
   Future<void> _fetchWorkouts() async {
+    setState(() {
+      isLoading = true;
+      error = null;
+    });
+
     try {
-      final workoutService = Provider.of<WorkoutService>(context, listen: false);
+      final workoutService =
+          Provider.of<WorkoutService>(context, listen: false);
       await workoutService.fetchWorkouts();
     } catch (e) {
       setState(() {
         error = 'Failed to load workouts: $e';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
       });
     }
   }
@@ -45,18 +59,25 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
       body: SafeArea(
         child: SizedBox(
           width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Container(
-              width: double.maxFinite,
-              padding: EdgeInsetsDirectional.only(top: 12.h),
-              child: Column(
-                spacing: 14,
-                children: [
-                  _buildHeaderSection(context),
-                  _buildMuscleGroupsSection(context),
-                  _buildCoachesSection(context),
-                  SizedBox(height: 18.h),
-                ],
+          child: RefreshIndicator(
+            key: _refreshIndicatorKey,
+            color: theme.colorScheme.primary,
+            onRefresh: _fetchWorkouts,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Container(
+                width: double.maxFinite,
+                padding: EdgeInsetsDirectional.only(top: 12.h),
+                child: Column(
+                  spacing: 14,
+                  children: [
+                    _buildHeaderSection(context),
+                    _buildMuscleGroupsSection(context),
+                    _buildWorkoutsGrid(context),
+                    _buildCoachesSection(context),
+                    SizedBox(height: 18.h),
+                  ],
+                ),
               ),
             ),
           ),
@@ -169,37 +190,12 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
     );
   }
 
-  Widget _buildNoWorkoutsMessage() {
-    return Container(
-      padding: EdgeInsets.all(16.h),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8.h),
-      ),
-      child: Column(
-        children: [
-          Text(
-            "No workouts found",
-            style: CustomTextStyles.titleMediumTTCommonsPrimary,
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            "Add workouts to your favorites to see them here",
-            textAlign: TextAlign.center,
-            style: CustomTextStyles.bodyMediumGray60001,
-          ),
-        ],
-      ),
-    );
-  }
 
   void _navigateToWorkoutDetails(int workoutId) {
     // Use direct navigation with MaterialPageRoute instead of Navigator.pushNamed
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => WorkoutDetailsScreen(workoutId: workoutId),
-      )
-    );
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => WorkoutDetailsScreen(workoutId: workoutId),
+    ));
   }
 
   /// Section Widget
@@ -211,22 +207,30 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
       ),
       child: Consumer<WorkoutService>(
         builder: (context, workoutService, child) {
-          if (workoutService.isLoading && workoutService.favoriteWorkouts.isEmpty) {
+          // Display any errors from the workout service
+          if (error != null) {
+            return _buildErrorMessage(error!);
+          }
+          
+          if (workoutService.isLoading &&
+              workoutService.favoriteWorkouts.isEmpty) {
             return Center(
               child: Padding(
                 padding: EdgeInsets.all(20.0),
-                child: CircularProgressIndicator(color: theme.colorScheme.primary),
+                child:
+                    CircularProgressIndicator(color: theme.colorScheme.primary),
               ),
             );
           }
-          
+
           final workouts = workoutService.favoriteWorkouts;
-          
+
           // Use MediaQuery to determine screen width and adjust grid accordingly
           final screenWidth = MediaQuery.of(context).size.width;
-          final crossAxisCount = screenWidth < 600 ? 2 : (screenWidth < 1200 ? 3 : 4);
+          final crossAxisCount =
+              screenWidth < 600 ? 2 : (screenWidth < 1200 ? 3 : 4);
           final aspectRatio = screenWidth < 600 ? 0.8 : 0.9;
-          
+
           return GridView.builder(
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
@@ -257,14 +261,15 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
   void _removeFromFavorites(int workoutId) {
     final workoutService = Provider.of<WorkoutService>(context, listen: false);
     workoutService.removeFromFavorites(workoutId);
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text("Workout removed from favorites"),
         action: SnackBarAction(
           label: "UNDO",
           onPressed: () {
-            final removedWorkout = workoutService.workouts.firstWhere((w) => w['id'] == workoutId);
+            final removedWorkout =
+                workoutService.workouts.firstWhere((w) => w['id'] == workoutId);
             workoutService.addToFavorites(removedWorkout);
           },
         ),
@@ -280,7 +285,8 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
           context: context,
           builder: (context) => AlertDialog(
             title: Text("Browse Workouts"),
-            content: Text("This feature will allow you to browse the workout library and add more workouts to your favorites."),
+            content: Text(
+                "This feature will allow you to browse the workout library and add more workouts to your favorites."),
             actions: [
               TextButton(
                 child: Text("OK"),
@@ -354,10 +360,26 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
   /// Muscle Groups Section
   Widget _buildMuscleGroupsSection(BuildContext context) {
     final muscleGroups = [
-      {'name': 'Chest & Arms', 'image': ImageConstant.imgRectangle188, 'query': 'chest'},
-      {'name': 'Legs & Core', 'image': ImageConstant.imgRectangle190, 'query': 'legs'},
-      {'name': 'Back & Shoulders', 'image': ImageConstant.imgRectangle194, 'query': 'back'},
-      {'name': 'Full Body', 'image': ImageConstant.imgRectangle192, 'query': 'full body'},
+      {
+        'name': 'Chest & Arms',
+        'image': ImageConstant.imgRectangle188,
+        'query': 'chest-arms'
+      },
+      {
+        'name': 'Legs & Core',
+        'image': ImageConstant.imgRectangle190,
+        'query': 'legs-core'
+      },
+      {
+        'name': 'Back & Shoulders',
+        'image': ImageConstant.imgRectangle194,
+        'query': 'back-shoulders'
+      },
+      {
+        'name': 'Full Body',
+        'image': ImageConstant.imgRectangle192,
+        'query': 'full body'
+      },
     ];
 
     return Padding(
@@ -392,7 +414,7 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
                       ),
                     ),
                   );
-                  
+
                   print('Navigating to muscle group: ${group['query']}');
                 },
                 child: Container(
@@ -433,12 +455,12 @@ class ListpushUpsItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = workout['name'] ?? 'Workout';
     final duration = workout['duration'] ?? 30;
-    
+
     // Calculate some stats based on the exercises
     final exercises = (workout['exercises'] as List?)?.length ?? 0;
     final reps = 10 * exercises; // Just a placeholder calculation
     final sets = 3; // Default placeholder
-    
+
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(

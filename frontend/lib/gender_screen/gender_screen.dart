@@ -21,7 +21,6 @@ class _GenderScreenState extends State<GenderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    
     return Scaffold(
       backgroundColor: appTheme.whiteA700,
       appBar: _buildAppBar(context),
@@ -56,7 +55,8 @@ class _GenderScreenState extends State<GenderScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        Expanded(child: _buildGenderOption(
+                        Expanded(
+                            child: _buildGenderOption(
                           label: "Male",
                           imagePath: ImageConstant.imgBotGenderMale,
                           isSelected: selectedGender == "Male",
@@ -66,7 +66,8 @@ class _GenderScreenState extends State<GenderScreen> {
                             });
                           },
                         )),
-                        Expanded(child: _buildGenderOption(
+                        Expanded(
+                            child: _buildGenderOption(
                           label: "Female",
                           imagePath: ImageConstant.imgLaptop,
                           isSelected: selectedGender == "Female",
@@ -97,7 +98,8 @@ class _GenderScreenState extends State<GenderScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              Expanded(child: _buildGenderOption(
+                              Expanded(
+                                  child: _buildGenderOption(
                                 label: "Male",
                                 imagePath: ImageConstant.imgBotGenderMale,
                                 isSelected: selectedGender == "Male",
@@ -107,7 +109,8 @@ class _GenderScreenState extends State<GenderScreen> {
                                   });
                                 },
                               )),
-                              Expanded(child: _buildGenderOption(
+                              Expanded(
+                                  child: _buildGenderOption(
                                 label: "Female",
                                 imagePath: ImageConstant.imgLaptop,
                                 isSelected: selectedGender == "Female",
@@ -133,7 +136,7 @@ class _GenderScreenState extends State<GenderScreen> {
       ),
     );
   }
-  
+
   Widget _buildHeader() {
     return SizedBox(
       height: context.heightRatio(0.12),
@@ -166,7 +169,7 @@ class _GenderScreenState extends State<GenderScreen> {
       ),
     );
   }
-  
+
   Widget _buildGenderOptions() {
     return Column(
       children: [
@@ -194,7 +197,7 @@ class _GenderScreenState extends State<GenderScreen> {
       ],
     );
   }
-  
+
   Widget _buildContinueButton() {
     return CustomElevatedButton(
       height: context.heightRatio(0.06),
@@ -207,15 +210,16 @@ class _GenderScreenState extends State<GenderScreen> {
       text: "Continue",
       buttonTextStyle: TextStyle(
         fontSize: context.responsiveFontSize(18),
-        color:Color(0xFFFF7900),
+        color: Color(0xFFFF7900),
         fontWeight: FontWeight.bold,
         fontFamily: CustomTextStyles.headlineSmallPoppinsWhiteA700.fontFamily,
       ),
       onPressed: () {
         if (selectedGender.isNotEmpty) {
-          final registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
+          final registrationProvider =
+              Provider.of<RegistrationProvider>(context, listen: false);
           registrationProvider.setGender(selectedGender);
-          
+
           // Navigate to age screen
           Navigator.pushNamed(
             context,
@@ -246,9 +250,9 @@ class _GenderScreenState extends State<GenderScreen> {
       tablet: context.widthRatio(0.18),
       desktop: context.widthRatio(0.12),
     );
-    
+
     final double iconSize = optionSize * 0.55;
-    
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -268,9 +272,7 @@ class _GenderScreenState extends State<GenderScreen> {
             height: optionSize,
             width: optionSize,
             decoration: BoxDecoration(
-              color: isSelected
-                  ? theme.colorScheme.primary
-                  : Colors.orange,
+              color: isSelected ? theme.colorScheme.primary : Colors.orange,
               shape: BoxShape.circle,
               boxShadow: isSelected
                   ? [

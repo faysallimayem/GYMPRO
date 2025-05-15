@@ -5,6 +5,7 @@ import '../app_utils.dart';
 import '../routes/app_routes.dart';
 import '../widgets.dart';
 import '../services/auth_service.dart';
+import '../main.dart' show navigatorKey;
 
 // ignore_for_file: must_be_immutable
 class AuthenticationScreen extends StatefulWidget {
@@ -17,7 +18,7 @@ class AuthenticationScreen extends StatefulWidget {
 class _AuthenticationScreenState extends State<AuthenticationScreen> {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
-  
+
   bool _isLoading = false;
   String? _errorMessage;
   bool _obscurePassword = true;
@@ -40,7 +41,8 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
               bottom: 20.h, // Added bottom padding
             ),
             child: Column(
-              mainAxisSize: MainAxisSize.min, // Use min size to prevent overflow
+              mainAxisSize:
+                  MainAxisSize.min, // Use min size to prevent overflow
               children: [
                 // Updated header section with separate widgets for each text
                 Column(
@@ -58,7 +60,7 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 50.h), // Reduced spacing
+                SizedBox(height: 50.h),
                 _buildEmailInputSection(context),
                 SizedBox(height: 24.h),
                 _buildPasswordInputSection(context),
@@ -69,7 +71,8 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                     padding: EdgeInsetsDirectional.only(start: 4.h),
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.forgotPasswordScreen);
+                        Navigator.pushNamed(
+                            context, AppRoutes.forgotPasswordScreen);
                       },
                       child: Text(
                         "Forgot Password",
@@ -96,7 +99,8 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                     end: 2.h,
                   ),
                   buttonStyle: CustomButtonStyles.fillOrangeA,
-                  buttonTextStyle: CustomTextStyles.headlineSmallPoppinsWhiteA700,
+                  buttonTextStyle:
+                      CustomTextStyles.headlineSmallPoppinsWhiteA700,
                   onPressed: _isLoading ? null : _handleLogin,
                 ),
                 SizedBox(height: 18.h),
@@ -108,12 +112,13 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
                     end: 2.h,
                   ),
                   buttonStyle: CustomButtonStyles.fillOrangeA,
-                  buttonTextStyle: CustomTextStyles.headlineSmallPoppinsWhiteA700,
+                  buttonTextStyle:
+                      CustomTextStyles.headlineSmallPoppinsWhiteA700,
                   onPressed: () {
                     Navigator.pushNamed(context, AppRoutes.signUpScreen);
                   },
                 ),
-                SizedBox(height: 20.h), // Added extra space at the bottom
+                SizedBox(height: 20.h),
               ],
             ),
           ),
@@ -136,19 +141,36 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
     });
 
     try {
-      await Provider.of<AuthService>(context, listen: false).login(
-        emailController.text.trim(), 
-        passwordController.text
-      );
-      
-      // Navigate to home screen on successful login
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, AppRoutes.homeScreen);
+      // Login with credentials
+      final authService = Provider.of<AuthService>(context, listen: false);
+      await authService.login(
+          emailController.text.trim(), passwordController.text);
+
+      // Add delay to ensure role is properly set
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Use the global navigator key for consistent navigation
+      if (authService.isAdmin) {
+        print('Navigating to admin dashboard using global navigator');
+
+        // Use the global navigator key
+        navigatorKey.currentState?.pushNamedAndRemoveUntil(
+            AppRoutes.adminDashbordScreen,
+            (_) => false // Remove all previous routes
+            );
+      } else {
+        print('Navigating to home screen using global navigator');
+
+        // Use the global navigator key
+        navigatorKey.currentState?.pushNamedAndRemoveUntil(
+            AppRoutes.homeScreen, (_) => false // Remove all previous routes
+            );
       }
     } catch (e) {
+      print('Login error caught: $e');
       setState(() {
-        _errorMessage = e.toString().contains('ApiException') 
-            ? "Invalid email or password" 
+        _errorMessage = e.toString().contains('ApiException')
+            ? "Invalid email or password"
             : "Connection error. Please try again.";
       });
     } finally {

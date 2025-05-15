@@ -216,7 +216,6 @@ final Map<String, String> en = {
       "Please select the following options to reset your password.",
   "msg_today_s_workouts": "Today’s Workouts",
   "msg_welcome_back_nick": "Welcome back, Username!",
-  "msg_welcome_back_nick": "Welcome back, Username!",
   "msg_what_is_your_height": "What Is Your height?",
   "msg_what_is_your_weight": "What Is Your Weight?",
   "msg_what_s_your_gender": "What’s Your Gender",
@@ -531,7 +530,8 @@ class ImageConstant {
 
   static String imgMaximize = '$imagePath/img_maximize.svg';
 
-  static String imgMedicalIconINutrition ='$imagePath/img_medical_icon_i_nutrition.svg';
+  static String imgMedicalIconINutrition =
+      '$imagePath/img_medical_icon_i_nutrition.svg';
 
   static String imgCalendar = '$imagePath/img_calendar.svg';
 
@@ -561,10 +561,11 @@ class ImageConstant {
 
   static String imgLockBlack900 = '$imagePath/img_lock_black_900.svg';
 
-  static String imgMedicalIconINutritionBlack900 ='$imagePath/img_medical_icon_i_nutrition_black_900.svg';
+  static String imgMedicalIconINutritionBlack900 =
+      '$imagePath/img_medical_icon_i_nutrition_black_900.svg';
 
   static String imgMaximizeBlack900 = '$imagePath/img_maximize_black_900.svg';
-  
+
   static String imgEmail = '$imagePath/email.png';
 
   static String imgLogout = '$imagePath/Logout.png';
@@ -581,7 +582,8 @@ class ImageConstant {
 
   static String img1062x62 = '$imagePath/img_10_62x62.png';
 
-  static String imgArrowLeftBlack900 ='$imagePath/img_arrow_left_black_900.svg';
+  static String imgArrowLeftBlack900 =
+      '$imagePath/img_arrow_left_black_900.svg';
 
   static String imgCameraGray600 = '$imagePath/img_camera_gray_600.svg';
 
@@ -593,7 +595,8 @@ class ImageConstant {
 
   static String imgImage84x98 = '$imagePath/img_image_84x98.png';
 
-  static String imgVectorOrangeA70001 ='$imagePath/img_vector_orange_a700_01.svg';
+  static String imgVectorOrangeA70001 =
+      '$imagePath/img_vector_orange_a700_01.svg';
 
   static String imgImage1 = '$imagePath/img_image_1.png';
 
@@ -607,7 +610,8 @@ class ImageConstant {
 
   static String imgHeartLine = '$imagePath/img_heart_line.svg';
 
-  static String imgArrowrightWhiteA700 ='$imagePath/img_arrowright_white_a700.svg';
+  static String imgArrowrightWhiteA700 =
+      '$imagePath/img_arrowright_white_a700.svg';
 
   static String imgClose = '$imagePath/img_close.svg';
 
@@ -642,9 +646,9 @@ class ImageConstant {
   static String imgEllipse3370 = '$imagePath/img_ellipse_3370.png';
 
   static String imageNotFound = 'assets/images/image_not_found.png';
-  
+
   static String imgDarkMode = '$imagePath/dark_mode.svg';
-  
+
   static String imgWeightUnit = '$imagePath/weight_unit.svg';
 
   static String imgChangePassword = '$imagePath/change_password.svg';
@@ -656,8 +660,38 @@ class ImageConstant {
   static String imgHelpCenter = '$imagePath/help_center.svg';
 
   static String imgContactUs = '$imagePath/contact_us.svg';
-  
+
   static String imgAppInfo = '$imagePath/app_info.svg';
+}
+
+/// Returns a full URL for an image, handling relative paths from the backend.
+String getFullImageUrl(String? imageUrl) {
+  if (imageUrl == null || imageUrl.isEmpty) return '';
+
+  // Already a full URL
+  if (imageUrl.startsWith('http')) return imageUrl;
+
+  // For asset paths that start with 'assets/'
+  if (imageUrl.startsWith('assets/')) {
+    return imageUrl; // Will be handled by AssetImage
+  }
+
+  // Clean up the path - remove any duplicate slashes
+  String cleanPath = imageUrl.replaceAll('//', '/');
+
+  // Make sure we have a consistent format with single leading slash
+  if (!cleanPath.startsWith('/')) {
+    cleanPath = '/$cleanPath';
+  }
+
+  // If the path refers to assets/images (new local structure), use asset path
+  if (cleanPath.contains('/assets/images/')) {
+    // Convert to a proper asset path format for Flutter
+    return 'assets/images/${cleanPath.split('/assets/images/').last}';
+  }
+
+  // For legacy backend paths (/images/exercices/...)
+  return 'http://10.0.2.2:3000$cleanPath';
 }
 
 class Sizer extends StatefulWidget {
@@ -671,9 +705,6 @@ class Sizer extends StatefulWidget {
 }
 
 class _SizerState extends State<Sizer> with WidgetsBindingObserver {
-  // Store current route to preserve during resizes
-  String? _currentRoute;
-
   @override
   void initState() {
     super.initState();
@@ -692,7 +723,7 @@ class _SizerState extends State<Sizer> with WidgetsBindingObserver {
       return OrientationBuilder(builder: (context, orientation) {
         // Set screen size without triggering full layout rebuild
         SizeUtils.setScreenSize(constraints, orientation);
-        
+
         // Use the builder from the parent widget
         return widget.builder(context, orientation, SizeUtils.deviceType);
       });
@@ -725,8 +756,7 @@ class SizeUtils {
     boxConstraints = constraints;
     orientation = currentOrientation;
     if (orientation == Orientation.portrait) {
-      width =
-          boxConstraints.maxWidth.isNonZero(defaultValue: figmaDesignWidth);
+      width = boxConstraints.maxWidth.isNonZero(defaultValue: figmaDesignWidth);
       height = boxConstraints.maxHeight.isNonZero();
     } else {
       width =

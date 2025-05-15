@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gradient_borders/gradient_borders.dart';
-import '../app_theme.dart';
-import '../app_utils.dart';
+import 'app_theme.dart';
+import 'app_utils.dart';
 
 extension DropDownStyleHelper on CustomDropDown {
   static OutlineInputBorder get fillOnPrimaryContainer => OutlineInputBorder(
@@ -504,104 +504,143 @@ class CustomImageView extends StatelessWidget {
   }
 
   Widget _buildWidget() {
+    if (imagePath == null) {
+      return _buildPlaceholder();
+    }
+
+    final type = _getImageType();
+
+    Widget imageWidget;
+    switch (type) {
+      case ImageType.svg:
+        imageWidget = SizedBox(
+          height: height,
+          width: width,
+          child: SvgPicture.asset(
+            imagePath!,
+            height: height,
+            width: width,
+            fit: fit ?? BoxFit.contain,
+            placeholderBuilder: (context) => _buildPlaceholder(),
+            colorFilter: color != null
+                ? ColorFilter.mode(color ?? Colors.transparent, BlendMode.srcIn)
+                : null,
+          ),
+        );
+        break;
+      case ImageType.file:
+        imageWidget = Image.file(
+          File(imagePath!),
+          height: height,
+          width: width,
+          fit: fit ?? BoxFit.cover,
+          color: color,
+          errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+        );
+        break;
+      case ImageType.network:
+        imageWidget = CachedNetworkImage(
+          height: height,
+          width: width,
+          fit: fit,
+          imageUrl: imagePath!,
+          color: color,
+          placeholder: (context, url) => SizedBox(
+            height: 30,
+            width: 30,
+            child: LinearProgressIndicator(
+              color: Colors.grey.shade200,
+              backgroundColor: Colors.grey.shade100,
+            ),
+          ),
+          errorWidget: (context, url, error) {
+            print("Error loading image: $url - $error");
+            // If the error is with Shutterstock or another stock image site, use a free image instead
+            if (url.contains('shutterstock.com') ||
+                url.contains('stockphoto') ||
+                url.contains('gettyimages')) {
+              // Return a category-appropriate placeholder based on the URL content
+              if (url.toLowerCase().contains('workout') ||
+                  url.toLowerCase().contains('exercise') ||
+                  url.toLowerCase().contains('fitness')) {
+                return Image.network(
+                  'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?q=80',
+                  height: height,
+                  width: width,
+                  fit: fit ?? BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      _buildPlaceholder(),
+                );
+              } else if (url.toLowerCase().contains('food') ||
+                  url.toLowerCase().contains('nutrition') ||
+                  url.toLowerCase().contains('meal')) {
+                return Image.network(
+                  'https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80',
+                  height: height,
+                  width: width,
+                  fit: fit ?? BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      _buildPlaceholder(),
+                );
+              }
+            }
+            return _buildPlaceholder();
+          },
+        );
+        break;
+      case ImageType.png:
+      default:
+        imageWidget = Image.asset(
+          imagePath!,
+          height: height,
+          width: width,
+          fit: fit ?? BoxFit.cover,
+          color: color,
+          errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+        );
+        break;
+    }
+
     return Padding(
       padding: margin ?? EdgeInsetsDirectional.zero,
       child: InkWell(
         onTap: onTap,
-        child: _buildCircleImage(),
+        child: radius != null
+            ? ClipRRect(
+                borderRadius: radius ?? BorderRadiusDirectional.zero,
+                child: border != null
+                    ? Container(
+                        decoration: BoxDecoration(
+                          border: border,
+                          borderRadius: radius,
+                        ),
+                        child: imageWidget,
+                      )
+                    : imageWidget,
+              )
+            : border != null
+                ? Container(
+                    decoration: BoxDecoration(
+                      border: border,
+                      borderRadius: radius,
+                    ),
+                    child: imageWidget,
+                  )
+                : imageWidget,
       ),
     );
   }
 
-  ///build the image with border radius
-  _buildCircleImage() {
-    if (radius != null) {
-      return ClipRRect(
-        borderRadius: radius ?? BorderRadiusDirectional.zero,
-        child: _buildImageWithBorder(),
-      );
+  ImageType _getImageType() {
+    if (imagePath!.startsWith('http') || imagePath!.startsWith('https')) {
+      return ImageType.network;
+    } else if (imagePath!.endsWith('.svg')) {
+      return ImageType.svg;
+    } else if (imagePath!.startsWith('file://')) {
+      return ImageType.file;
     } else {
-      return _buildImageWithBorder();
+      return ImageType.png;
     }
-  }
-
-  ///build the image with border and border radius style
-  _buildImageWithBorder() {
-    if (border != null) {
-      return Container(
-        decoration: BoxDecoration(
-          border: border,
-          borderRadius: radius,
-        ),
-        child: _buildImageView(),
-      );
-    } else {
-      return _buildImageView();
-    }
-  }
-
-  Widget _buildImageView() {
-    if (imagePath != null) {
-      try {
-        switch (imagePath!.imageType) {
-          case ImageType.svg:
-            return SizedBox(
-              height: height,
-              width: width,
-              child: SvgPicture.asset(
-                imagePath!,
-                height: height,
-                width: width,
-                fit: fit ?? BoxFit.contain,
-                placeholderBuilder: (context) => _buildPlaceholder(),
-                colorFilter: color != null
-                    ? ColorFilter.mode(
-                        color ?? Colors.transparent, BlendMode.srcIn)
-                    : null,
-              ),
-            );
-          case ImageType.file:
-            return Image.file(
-              File(imagePath!),
-              height: height,
-              width: width,
-              fit: fit ?? BoxFit.cover,
-              color: color,
-              errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-            );
-          case ImageType.network:
-            return CachedNetworkImage(
-              height: height,
-              width: width,
-              fit: fit,
-              imageUrl: imagePath!,
-              color: color,
-              placeholder: (context, url) => SizedBox(
-                height: 30,
-                width: 30,
-                child: LinearProgressIndicator(
-                  color: Colors.grey.shade200,
-                  backgroundColor: Colors.grey.shade100,
-                ),
-              ),
-              errorWidget: (context, url, error) => _buildPlaceholder(),
-            );
-          case ImageType.png:
-          default:
-            return Image.asset(
-              imagePath!,
-              height: height,
-              width: width,
-              fit: fit ?? BoxFit.cover,
-              color: color,
-              errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-            );
-        }
-      } catch (e) {
-        return _buildPlaceholder();
-      }
-    }
-    return _buildPlaceholder();
   }
 
   Widget _buildPlaceholder() {
@@ -766,13 +805,9 @@ class CustomSearchView extends StatelessWidget {
               EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           controller: controller,
           focusNode: focusNode,
-          onTapOutside: (event) {
-            if (focusNode != null) {
-              focusNode?.unfocus();
-            } else {
-              FocusManager.instance.primaryFocus?.unfocus();
-            }
-          },
+          // Allow continuous typing by not unfocusing on every tap outside
+          // This fixes search bar losing focus while typing
+          onTapOutside: null,
           autofocus: autofocus!,
           style: textStyle ?? CustomTextStyles.bodyMediumPoppins,
           keyboardType: textInputType,
@@ -1034,7 +1069,8 @@ class AppbarLeadingImage extends StatelessWidget {
 }
 
 class AppbarSubtitle extends StatelessWidget {
-  const AppbarSubtitle({super.key, required this.text, this.onTap, this.margin});
+  const AppbarSubtitle(
+      {super.key, required this.text, this.onTap, this.margin});
 
   final String text;
 
@@ -1062,7 +1098,8 @@ class AppbarSubtitle extends StatelessWidget {
 }
 
 class AppbarSubtitleFour extends StatelessWidget {
-  const AppbarSubtitleFour({super.key, required this.text, this.onTap, this.margin});
+  const AppbarSubtitleFour(
+      {super.key, required this.text, this.onTap, this.margin});
 
   final String text;
 
@@ -1090,7 +1127,8 @@ class AppbarSubtitleFour extends StatelessWidget {
 }
 
 class AppbarSubtitleOne extends StatelessWidget {
-  const AppbarSubtitleOne({super.key, required this.text, this.onTap, this.margin});
+  const AppbarSubtitleOne(
+      {super.key, required this.text, this.onTap, this.margin});
 
   final String text;
 
@@ -1118,7 +1156,8 @@ class AppbarSubtitleOne extends StatelessWidget {
 }
 
 class AppbarSubtitleThree extends StatelessWidget {
-  const AppbarSubtitleThree({super.key, required this.text, this.onTap, this.margin});
+  const AppbarSubtitleThree(
+      {super.key, required this.text, this.onTap, this.margin});
 
   final String text;
 
@@ -1146,7 +1185,8 @@ class AppbarSubtitleThree extends StatelessWidget {
 }
 
 class AppbarSubtitleTwo extends StatelessWidget {
-  const AppbarSubtitleTwo({super.key, required this.text, this.onTap, this.margin});
+  const AppbarSubtitleTwo(
+      {super.key, required this.text, this.onTap, this.margin});
 
   final String text;
 

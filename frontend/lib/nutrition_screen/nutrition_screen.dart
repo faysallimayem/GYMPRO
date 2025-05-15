@@ -22,38 +22,39 @@ class _NutritionScreenState extends State<NutritionScreen> {
   String? _selectedCategory;
   String _searchQuery = '';
   String? _error;
-  
+
   @override
   void initState() {
     super.initState();
     _loadData();
   }
-  
+
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
-    
+
     try {
       print('NutritionScreen: Loading nutrition data');
-      
+
       // Load categories
       final categories = await _nutritionService.getAllCategories();
       print('NutritionScreen: Loaded ${categories.length} categories');
-      
+
       // Load nutrition items with filter if set
       List<Nutrition> nutritionItems;
       if (_selectedCategory != null) {
-        nutritionItems = await _nutritionService.getNutritionByCategory(_selectedCategory!);
+        nutritionItems =
+            await _nutritionService.getNutritionByCategory(_selectedCategory!);
       } else if (_searchQuery.isNotEmpty) {
         nutritionItems = await _nutritionService.searchNutrition(_searchQuery);
       } else {
         nutritionItems = await _nutritionService.getAllNutrition();
       }
-      
+
       print('NutritionScreen: Loaded ${nutritionItems.length} nutrition items');
-      
+
       if (mounted) {
         setState(() {
           _categories = categories;
@@ -63,7 +64,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
       }
     } catch (e) {
       print('NutritionScreen: Error loading data: $e');
-      
+
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -72,14 +73,14 @@ class _NutritionScreenState extends State<NutritionScreen> {
       }
     }
   }
-  
+
   void _onCategorySelected(String? category) {
     setState(() {
       _selectedCategory = category;
     });
     _loadData();
   }
-  
+
   void _onSearch(String query) {
     setState(() {
       _searchQuery = query;
@@ -103,13 +104,13 @@ class _NutritionScreenState extends State<NutritionScreen> {
             _buildCategoryFilter(context),
             SizedBox(height: 16),
             Expanded(
-              child: _isLoading 
-                ? const Center(child: CircularProgressIndicator()) 
-                : _error != null
-                  ? _buildErrorView()
-                  : _nutritionItems.isEmpty
-                    ? Center(child: Text('No nutrition items found')) 
-                    : _buildNutritionList(context),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? _buildErrorView()
+                      : _nutritionItems.isEmpty
+                          ? Center(child: Text('No nutrition items found'))
+                          : _buildNutritionList(context),
             ),
           ],
         ),
@@ -210,16 +211,18 @@ class _NutritionScreenState extends State<NutritionScreen> {
         scrollDirection: Axis.horizontal,
         children: [
           _buildCategoryChip(context, null, 'All'),
-          ..._categories.map((category) => _buildCategoryChip(context, category, category)),
+          ..._categories.map(
+              (category) => _buildCategoryChip(context, category, category)),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryChip(BuildContext context, String? category, String label) {
-    final isSelected = (category == _selectedCategory) || 
-                        (category == null && _selectedCategory == null);
-    
+  Widget _buildCategoryChip(
+      BuildContext context, String? category, String label) {
+    final isSelected = (category == _selectedCategory) ||
+        (category == null && _selectedCategory == null);
+
     return Padding(
       padding: EdgeInsetsDirectional.only(end: 8),
       child: FilterChip(
@@ -227,7 +230,8 @@ class _NutritionScreenState extends State<NutritionScreen> {
         selected: isSelected,
         onSelected: (_) => _onCategorySelected(category),
         backgroundColor: appTheme.blueGray100,
-        selectedColor: theme.colorScheme.primary,  // Use theme.colorScheme.primary instead of appTheme.primary
+        selectedColor: theme.colorScheme
+            .primary, // Use theme.colorScheme.primary instead of appTheme.primary
         labelStyle: TextStyle(
           color: isSelected ? Colors.white : Colors.black,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -307,10 +311,13 @@ class _NutritionScreenState extends State<NutritionScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNutrientInfo('Protein', '${item.protein.toStringAsFixed(1)}g'),
-                _buildNutrientInfo('Calories', item.calories.toStringAsFixed(0)),
+                _buildNutrientInfo(
+                    'Protein', '${item.protein.toStringAsFixed(1)}g'),
+                _buildNutrientInfo(
+                    'Calories', item.calories.toStringAsFixed(0)),
                 _buildNutrientInfo('Fat', '${item.fat.toStringAsFixed(1)}g'),
-                _buildNutrientInfo('Carbs', '${item.carbohydrates.toStringAsFixed(1)}g'),
+                _buildNutrientInfo(
+                    'Carbs', '${item.carbohydrates.toStringAsFixed(1)}g'),
               ],
             ),
           ],
@@ -329,12 +336,15 @@ class _NutritionScreenState extends State<NutritionScreen> {
         SizedBox(height: 4),
         Text(
           value,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
     );
   }
-  
+
   @override
   void dispose() {
     _searchController.dispose();

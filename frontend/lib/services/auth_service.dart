@@ -12,22 +12,28 @@ class AuthService extends ChangeNotifier {
 
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'user_data';
-  
+  static const String _roleKey = 'user_role';
+
   bool _isAuthenticated = false;
   Map<String, dynamic>? _userData;
-  
+  String? _userRole;
+
   bool get isAuthenticated => _isAuthenticated;
   Map<String, dynamic>? get userData => _userData;
+  String? get userRole => _userRole;
+
+  bool get isAdmin => _userRole == 'admin';
 
   // Initialize the auth service
   Future<void> initialize() async {
     final token = await getToken();
     _isAuthenticated = token != null;
-    
+
     if (_isAuthenticated) {
       _userData = await getUserDetails();
+      _userRole = await getUserRole();
     }
-    
+
     notifyListeners();
   }
 
@@ -45,13 +51,29 @@ class AuthService extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Get user role
+  Future<String?> getUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_roleKey);
+  }
+
+  // Store user role
+  Future<void> setUserRole(String role) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_roleKey, role);
+    _userRole = role;
+    notifyListeners();
+  }
+
   // Remove token (logout)
   Future<void> removeToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_userKey);
+    await prefs.remove(_roleKey);
     _isAuthenticated = false;
     _userData = null;
+    _userRole = null;
     notifyListeners();
   }
 
@@ -60,7 +82,7 @@ class AuthService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString(_userKey);
     if (userJson == null) return null;
-    
+
     return jsonDecode(userJson);
   }
 
@@ -86,23 +108,71 @@ class AuthService extends ChangeNotifier {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
-        
+        print('Login response: $responseData');
+
         // Store token and user data
         final token = responseData['access_token'] ?? responseData['token'];
         if (token != null) {
           await setToken(token);
+
+          // Extract role from JWT token
+          final roleFromToken = _extractRoleFromToken(token);
+          if (roleFromToken != null) {
+            print('Role extracted from token: $roleFromToken');
+            await setUserRole(roleFromToken.toLowerCase());
+          }
         }
-        
-        if (responseData['user'] != null) {
-          await setUserDetails(responseData['user']);
+
+        // Extract user data if available in response
+        final userData = responseData['user'];
+        if (userData != null) {
+          print('User data from login: $userData');
+          await setUserDetails(userData);
+
+          // Extract role from user data if available
+          if (userData['role'] != null) {
+            print('Role from user data: ${userData['role']}');
+            await setUserRole(userData['role'].toString().toLowerCase());
+          }
+        } else {
+          // If user data is not provided, fetch it from profile endpoint
+          try {
+            await getUserProfile();
+          } catch (e) {
+            print('Error fetching user profile after login: $e');
+          }
         }
-        
+
+        print('After login - isAdmin: $isAdmin, userRole: $_userRole');
         return responseData;
       } else {
         throw Exception('Login failed: ${_getErrorMessage(response)}');
       }
     } catch (e) {
       throw Exception('Login error: ${e.toString()}');
+    }
+  }
+
+  // Extract role from JWT token
+  String? _extractRoleFromToken(String token) {
+    try {
+      // JWT token has three parts separated by dots
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+
+      // Decode the payload (second part)
+      final payload = parts[1];
+      final normalized = base64Url.normalize(payload);
+      final decoded = utf8.decode(base64Url.decode(normalized));
+      final Map<String, dynamic> decodedJson = jsonDecode(decoded);
+
+      // Extract role from decoded payload
+      final role = decodedJson['role'] as String?;
+      print('Role extracted from token: $role');
+      return role;
+    } catch (e) {
+      print('Error extracting role from token: $e');
+      return null;
     }
   }
 
@@ -180,7 +250,7 @@ class AuthService extends ChangeNotifier {
   Future<void> logout() async {
     try {
       final token = await getToken();
-      
+
       if (token != null) {
         // Call logout endpoint if your API has one
         try {
@@ -192,10 +262,11 @@ class AuthService extends ChangeNotifier {
           );
         } catch (e) {
           // Even if server logout fails, we still want to clear local data
-          print('Server logout failed but proceeding with local logout: ${e.toString()}');
+          print(
+              'Server logout failed but proceeding with local logout: ${e.toString()}');
         }
       }
-      
+
       // Always clear local data
       await removeToken();
     } catch (e) {
@@ -213,39 +284,63 @@ class AuthService extends ChangeNotifier {
   Future<Map<String, dynamic>> getUserProfile() async {
     try {
       final token = await getToken();
-      
+
       if (token == null) {
         throw Exception('Not authenticated');
       }
-      
+
+      print('Fetching user profile with token: ${token.substring(0, 10)}...');
       final response = await http.get(
-        Uri.parse('${AppConfig.apiUrl}/user/profile'),
+        Uri.parse(
+            '${AppConfig.apiUrl}/auth/me'), // Changed endpoint to auth/me which should be protected by JWT
         headers: {
           'Authorization': 'Bearer $token',
         },
       );
 
+      print('Profile response status: ${response.statusCode}');
       if (response.statusCode == 200) {
         final userData = jsonDecode(response.body);
-        await setUserDetails(userData);  // Update stored user data
+        print('Profile data received: $userData');
+
+        // If role is present in the profile data, update it
+        if (userData['role'] != null) {
+          await setUserRole(userData['role'].toString().toLowerCase());
+        }
+
+        await setUserDetails(userData); // Update stored user data
         return userData;
       } else {
-        throw Exception('Failed to get user profile: ${_getErrorMessage(response)}');
+        print('Failed to get profile: ${response.body}');
+        // Don't throw an exception for 403 errors as the role info may already be extracted from token
+        if (response.statusCode == 403) {
+          print('Using role from token instead of profile data');
+          return {'message': 'Using role from token'};
+        } else {
+          throw Exception(
+              'Failed to get user profile: ${_getErrorMessage(response)}');
+        }
       }
     } catch (e) {
+      print('Get profile error: $e');
+      // Don't rethrow if we already have a role from token
+      if (_userRole != null) {
+        return {'message': 'Using role from token'};
+      }
       throw Exception('Get profile error: ${e.toString()}');
     }
   }
 
   // Update user profile
-  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> userData) async {
+  Future<Map<String, dynamic>> updateProfile(
+      Map<String, dynamic> userData) async {
     try {
       final token = await getToken();
-      
+
       if (token == null) {
         throw Exception('Not authenticated');
       }
-      
+
       final response = await http.patch(
         Uri.parse('${AppConfig.apiUrl}/user/profile'),
         headers: {
@@ -257,10 +352,11 @@ class AuthService extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final updatedData = jsonDecode(response.body);
-        await setUserDetails(updatedData);  // Update stored user data
+        await setUserDetails(updatedData); // Update stored user data
         return updatedData;
       } else {
-        throw Exception('Failed to update profile: ${_getErrorMessage(response)}');
+        throw Exception(
+            'Failed to update profile: ${_getErrorMessage(response)}');
       }
     } catch (e) {
       throw Exception('Update profile error: ${e.toString()}');
@@ -268,14 +364,15 @@ class AuthService extends ChangeNotifier {
   }
 
   // Change password
-  Future<void> changePassword(String currentPassword, String newPassword) async {
+  Future<void> changePassword(
+      String currentPassword, String newPassword) async {
     try {
       final token = await getToken();
-      
+
       if (token == null) {
         throw Exception('Not authenticated');
       }
-      
+
       final response = await http.post(
         Uri.parse('${AppConfig.apiUrl}/user/change-password'),
         headers: {
@@ -289,7 +386,8 @@ class AuthService extends ChangeNotifier {
       );
 
       if (response.statusCode != 200) {
-        throw Exception('Failed to change password: ${_getErrorMessage(response)}');
+        throw Exception(
+            'Failed to change password: ${_getErrorMessage(response)}');
       }
     } catch (e) {
       throw Exception('Change password error: ${e.toString()}');

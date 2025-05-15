@@ -25,7 +25,8 @@ class UserProfilePage extends StatelessWidget {
         child: SingleChildScrollView(
           child: Container(
             width: double.maxFinite,
-            padding: EdgeInsetsDirectional.symmetric(horizontal: responsivePadding),
+            padding:
+                EdgeInsetsDirectional.symmetric(horizontal: responsivePadding),
             child: Column(
               mainAxisSize: MainAxisSize.max,
               children: [
@@ -222,7 +223,6 @@ class UserProfilePage extends StatelessWidget {
     );
   }
 
-
   /// Section Widget
   Widget _buildLogoutRow(BuildContext context) {
     return GestureDetector(
@@ -243,11 +243,11 @@ class UserProfilePage extends StatelessWidget {
             duration: Duration(seconds: 1),
           ),
         );
-        
+
         try {
           // Call logout method from AuthService
           await Provider.of<AuthService>(context, listen: false).logout();
-          
+
           // Navigate to authentication screen using MaterialPageRoute
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(

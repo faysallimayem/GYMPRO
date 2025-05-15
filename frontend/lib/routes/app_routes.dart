@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import '../add_exercise_one_screen/add_exercise_one_screen.dart';
-import '../add_exercise_screen/add_exercise_screen.dart';
-import '../add_nutrition_screen/add_nutrition_screen.dart';
 import '../add_user_screen/add_user_screen.dart';
 import '../admin_dashbord_screen/admin_dashbord_screen.dart';
 import '../age_screen/age_screen.dart';
 import '../authentication_screen/authentication_screen.dart';
 import '../chat_screen/chat_screen.dart';
 import '../coach_profile_screen/coach_profile_screen.dart';
-import '../edit_nutrition_screen/edit_nutrition_screen.dart';
-import '../edit_user_one_screen/edit_user_one_screen.dart';
+import '../course_management_screen/course_management_screen.dart';
 import '../edit_user_profile_screen/edit_user_profile_screen.dart';
 import '../edit_user_screen/edit_user_screen.dart';
 import '../exercice_explication_screen/exercice_explication_screen.dart';
@@ -25,7 +21,7 @@ import '../nutrition_management_screen/nutrition_management_screen.dart';
 import '../nutrition_screen/nutrition_screen.dart';
 import '../reset_password_screen/reset_password_screen.dart';
 import '../sign_up_screen/sign_up_screen.dart';
-import '../user_managment_screen/user_managment_screen.dart';
+import '../user_management_screen/user_management_screen.dart';
 import '../weight_screen/weight_screen.dart';
 import '../nutrition_calculator_screen/nutrition_calculator_screen.dart';
 import '../meal_creation_screen/meal_creation_screen.dart';
@@ -39,7 +35,7 @@ class AppRoutes {
   static const String signUpScreen = '/sign_up_screen';
 
   static const String forgotPasswordScreen = '/forgot_password_screen';
-  
+
   static const String resetPasswordScreen = '/reset_password_screen';
 
   static const String genderScreen = '/gender_screen';
@@ -60,35 +56,30 @@ class AppRoutes {
 
   static const String userManagmentScreen = '/user_managment_screen';
 
+  static const String courseManagementScreen = '/course_management_screen';
+
   static const String addUserScreen = '/add_user_screen';
 
   static const String editUserScreen = '/edit_user_screen';
 
-  static const String editUserOneScreen = '/edit_user_one_screen';
-
-  static const String nutritionManagementScreen ='/nutrition_management_screen';
+  static const String nutritionManagementScreen =
+      '/nutrition_management_screen';
 
   static const String nutritionScreen = '/nutrition_screen';
 
-  static const String addNutritionScreen = '/add_nutrition_screen';
+  static const String nutritionCalculatorScreen =
+      '/nutrition_calculator_screen';
 
-  static const String editNutritionScreen = '/edit_nutrition_screen';
-  
-  static const String nutritionCalculatorScreen = '/nutrition_calculator_screen';
-  
   static const String mealCreationScreen = '/meal_creation_screen';
 
   static const String exerciceManagmentScreen = '/exercice_managment_screen';
 
-  static const String addExerciseScreen = '/add_exercise_screen';
-
-  static const String addExerciseOneScreen = '/add_exercise_one_screen';
-
   static const String chatScreen = '/chat_screen';
 
   static const String workoutDetailsScreen = '/workout_details_screen';
-  
-  static const String exerciceExplicationScreen ='/exercice_explication_screen';
+
+  static const String exerciceExplicationScreen =
+      '/exercice_explication_screen';
 
   static const String gymClassesPage = '/gym_classes_page';
 
@@ -116,25 +107,24 @@ class AppRoutes {
     heightScreen: (context) => HeightScreen(),
     homeScreen: (context) => HomeScreen(),
     adminDashbordScreen: (context) => AdminDashbordScreen(),
-    userManagmentScreen: (context) => UserManagmentScreen(),
+    userManagmentScreen: (context) => UserManagementScreen(),
+    courseManagementScreen: (context) => CourseManagementScreen(),
     addUserScreen: (context) => AddUserScreen(),
-    editUserScreen: (context) => EditUserScreen(),
-    editUserOneScreen: (context) => EditUserOneScreen(),
+    editUserScreen: (context) {
+      final user = ModalRoute.of(context)!.settings.arguments as dynamic;
+      return EditUserScreen(user: user);
+    },
     nutritionManagementScreen: (context) => NutritionManagementScreen(),
     nutritionScreen: (context) => NutritionScreen(),
-    addNutritionScreen: (context) => AddNutritionScreen(),
-    editNutritionScreen: (context) => EditNutritionScreen(),
     nutritionCalculatorScreen: (context) => NutritionCalculatorScreen(),
     mealCreationScreen: (context) => MealCreationScreen(),
     exerciceManagmentScreen: (context) => ExerciceManagmentScreen(),
-    addExerciseScreen: (context) => AddExerciseScreen(),
-    addExerciseOneScreen: (context) => AddExerciseOneScreen(),
     chatScreen: (context) => ChatScreen(),
     workoutDetailsScreen: (context) => WorkoutDetailsScreen(),
     exerciceExplicationScreen: (context) => ExerciceExplicationScreen(),
     coachProfileScreen: (context) => CoachProfileScreen(),
     editUserProfileScreen: (context) => EditUserProfileScreen(),
     favoriteExercisesScreen: (context) => FavoriteExercisesScreen(),
-    initialRoute: (context) =>GetStartedScreen()
+    initialRoute: (context) => GetStartedScreen()
   };
 }

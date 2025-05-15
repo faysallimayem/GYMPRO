@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 /// A global route observer that tracks navigation state
 class AppRouteObserver extends RouteObserver<PageRoute<dynamic>> {
   static final AppRouteObserver _instance = AppRouteObserver._internal();
-  
+
   factory AppRouteObserver() => _instance;
-  
+
   AppRouteObserver._internal();
 
   /// Current route name

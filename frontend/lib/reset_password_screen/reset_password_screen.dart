@@ -10,7 +10,7 @@ import 'package:provider/provider.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String? token;
-  
+
   const ResetPasswordScreen({super.key, this.token});
 
   @override
@@ -31,7 +31,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   void initState() {
     super.initState();
     _token = widget.token;
-    
+
     // If token was not passed directly, try to get it from the URL parameters
     if (_token == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -44,7 +44,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           });
         } else {
           setState(() {
-            _errorMessage = "No reset token found. Please request a new password reset link.";
+            _errorMessage =
+                "No reset token found. Please request a new password reset link.";
           });
         }
       });
@@ -59,56 +60,52 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       });
       return;
     }
-    
+
     if (passwordController.text.length < 6) {
       setState(() {
         _errorMessage = "Password must be at least 6 characters";
       });
       return;
     }
-    
+
     if (passwordController.text != confirmPasswordController.text) {
       setState(() {
         _errorMessage = "Passwords do not match";
       });
       return;
     }
-    
+
     if (_token == null) {
       setState(() {
         _errorMessage = "Reset token is missing";
       });
       return;
     }
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
       _successMessage = null;
     });
-    
+
     try {
       await Provider.of<AuthService>(context, listen: false)
           .resetPassword(_token!, passwordController.text);
-      
+
       setState(() {
         _successMessage = "Password updated successfully";
         _isLoading = false;
-        
+
         // Clear inputs after success
         passwordController.clear();
         confirmPasswordController.clear();
       });
-      
+
       // Navigate to login screen after 2 seconds
       Future.delayed(const Duration(seconds: 2), () {
         Navigator.pushNamedAndRemoveUntil(
-          context, 
-          AppRoutes.authenticationScreen, 
-          (route) => false
-        );
+            context, AppRoutes.authenticationScreen, (route) => false);
       });
-      
     } catch (e) {
       setState(() {
         _errorMessage = e.toString().contains("Invalid or expired token")
@@ -177,7 +174,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       fontSize: 18.h,
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontFamily: CustomTextStyles.headlineSmallPoppinsWhiteA700.fontFamily,
+                      fontFamily: CustomTextStyles
+                          .headlineSmallPoppinsWhiteA700.fontFamily,
                     ),
                     onPressed: _isLoading ? null : _resetPassword,
                   ),
@@ -236,7 +234,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               ),
             ),
             suffixConstraints: BoxConstraints(maxHeight: 80.h),
-            contentPadding: EdgeInsetsDirectional.fromSTEB(28.h, 28.h, 20.h, 28.h),
+            contentPadding:
+                EdgeInsetsDirectional.fromSTEB(28.h, 28.h, 20.h, 28.h),
             borderDecoration: TextFormFieldStyleHelper.outlineGray,
             fillColor: appTheme.gray50,
           ),
@@ -252,8 +251,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             textInputAction: TextInputAction.done,
             obscureText: _obscureConfirmPassword,
             prefix: Container(
-              padding: EdgeInsetsDirectional.all(6.h), // Reduced padding to create a distance
-              margin: EdgeInsetsDirectional.only(end: 12.h), // Increased margin for spacing
+              padding: EdgeInsetsDirectional.all(
+                  6.h), // Reduced padding to create a distance
+              margin: EdgeInsetsDirectional.only(
+                  end: 12.h), // Increased margin for spacing
               decoration: BoxDecoration(
                 color: Color(0xFFFFF8F0),
                 shape: BoxShape.circle,
@@ -276,14 +277,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               child: Container(
                 margin: EdgeInsetsDirectional.fromSTEB(16.h, 28.h, 20.h, 28.h),
                 child: Icon(
-                  _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                  _obscureConfirmPassword
+                      ? Icons.visibility_off
+                      : Icons.visibility,
                   color: appTheme.gray400,
                   size: 24.h,
                 ),
               ),
             ),
             suffixConstraints: BoxConstraints(maxHeight: 80.h),
-            contentPadding: EdgeInsetsDirectional.fromSTEB(28.h, 28.h, 20.h, 28.h),
+            contentPadding:
+                EdgeInsetsDirectional.fromSTEB(28.h, 28.h, 20.h, 28.h),
             borderDecoration: TextFormFieldStyleHelper.outlineGray,
             fillColor: appTheme.gray50,
           ),

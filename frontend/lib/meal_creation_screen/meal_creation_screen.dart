@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/meal.dart';
 import '../models/nutrition.dart';
 import '../services/meal_service.dart';
-import '../services/nutrition_service.dart';
 import '../services/auth_service.dart';
 import '../app_theme.dart';
-import '../widgets.dart';
 import '../nutrition_calculator_screen/nutrition_calculator_screen.dart';
 
 class MealCreationScreen extends StatefulWidget {
@@ -15,46 +13,45 @@ class MealCreationScreen extends StatefulWidget {
   State<MealCreationScreen> createState() => _MealCreationScreenState();
 }
 
-class _MealCreationScreenState extends State<MealCreationScreen> with SingleTickerProviderStateMixin {
+class _MealCreationScreenState extends State<MealCreationScreen>
+    with SingleTickerProviderStateMixin {
   final MealService _mealService = MealService();
-  final NutritionService _nutritionService = NutritionService();
   final AuthService _authService = AuthService();
-  
+
   List<Meal> _meals = [];
   Map<String, List<dynamic>> _mealTemplates = {};
   bool _isLoading = true;
-  final bool _isEditing = false;
-  
+
   int? _userId;
-  
+
   late TabController _tabController;
-  
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _initializeData();
   }
-  
+
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
   }
-  
+
   Future<void> _initializeData() async {
     setState(() => _isLoading = true);
-    
+
     try {
       // Get user data from auth service
       final userData = await _authService.getUserDetails();
       _userId = userData?['id'];
-      
+
       await Future.wait([
         _loadMeals(),
         _loadMealTemplates(),
       ]);
-      
+
       setState(() => _isLoading = false);
     } catch (e) {
       setState(() => _isLoading = false);
@@ -63,7 +60,7 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
       );
     }
   }
-  
+
   Future<void> _loadMeals() async {
     try {
       final meals = await _mealService.getAllMeals(userId: _userId);
@@ -74,23 +71,24 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
       );
     }
   }
-  
+
   Future<void> _loadMealTemplates() async {
     try {
       final templates = await _mealService.getMealTemplates();
       setState(() => _mealTemplates = templates);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading meal templates: ${e.toString()}')),
+        SnackBar(
+            content: Text('Error loading meal templates: ${e.toString()}')),
       );
     }
   }
-  
+
   Future<void> _deleteMeal(int id) async {
     try {
       await _mealService.deleteMeal(id);
       _loadMeals();
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Meal deleted successfully')),
       );
@@ -100,7 +98,7 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
       );
     }
   }
-  
+
   void _showMealDetails(Meal meal) {
     showModalBottomSheet(
       context: context,
@@ -120,7 +118,8 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
                 children: [
                   Text(
                     meal.name,
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -133,7 +132,8 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
                   padding: const EdgeInsets.only(bottom: 8.0),
                   child: Text(
                     meal.description!,
-                    style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                    style: const TextStyle(
+                        fontSize: 16, fontStyle: FontStyle.italic),
                   ),
                 ),
               const Divider(),
@@ -142,10 +142,20 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildNutritionStat('Calories', '${meal.totalCalories.toStringAsFixed(0)} kcal', Colors.orange),
-                    _buildNutritionStat('Protein', '${meal.totalProtein.toStringAsFixed(1)}g', Colors.blue),
-                    _buildNutritionStat('Fat', '${meal.totalFat.toStringAsFixed(1)}g', Colors.red),
-                    _buildNutritionStat('Carbs', '${meal.totalCarbohydrates.toStringAsFixed(1)}g', Colors.green),
+                    _buildNutritionStat(
+                        'Calories',
+                        '${meal.totalCalories.toStringAsFixed(0)} kcal',
+                        Colors.orange),
+                    _buildNutritionStat(
+                        'Protein',
+                        '${meal.totalProtein.toStringAsFixed(1)}g',
+                        Colors.blue),
+                    _buildNutritionStat('Fat',
+                        '${meal.totalFat.toStringAsFixed(1)}g', Colors.red),
+                    _buildNutritionStat(
+                        'Carbs',
+                        '${meal.totalCarbohydrates.toStringAsFixed(1)}g',
+                        Colors.green),
                   ],
                 ),
               ),
@@ -163,7 +173,8 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
                     return ListTile(
                       leading: item.nutrition?.imageUrl != null
                           ? CircleAvatar(
-                              backgroundImage: NetworkImage(item.nutrition!.imageUrl!),
+                              backgroundImage:
+                                  NetworkImage(item.nutrition!.imageUrl!),
                             )
                           : CircleAvatar(
                               backgroundColor: AppTheme.primaryColor,
@@ -185,7 +196,7 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
       },
     );
   }
-  
+
   Widget _buildNutritionStat(String label, String value, Color color) {
     return Column(
       children: [
@@ -201,11 +212,12 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
       ],
     );
   }
-  
+
   void _createMealFromTemplate(String templateName, List<dynamic> foods) async {
-    final TextEditingController nameController = TextEditingController(text: templateName);
+    final TextEditingController nameController =
+        TextEditingController(text: templateName);
     final TextEditingController descriptionController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -242,7 +254,7 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
                 );
                 return;
               }
-              
+
               Navigator.of(context).pop();
               await _saveMealFromTemplate(
                 nameController.text,
@@ -256,32 +268,29 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
       ),
     );
   }
-  
-  Future<void> _saveMealFromTemplate(String name, String description, List<dynamic> foods) async {
+
+  Future<void> _saveMealFromTemplate(
+      String name, String description, List<dynamic> foods) async {
     try {
       setState(() => _isLoading = true);
-      
+
       final items = foods.map((food) {
         final nutrition = Nutrition.fromJson(food);
-        return {
-          'nutritionId': nutrition.id,
-          'quantity': 1,
-          'unit': 'serving'
-        };
+        return {'nutritionId': nutrition.id, 'quantity': 1, 'unit': 'serving'};
       }).toList();
-      
+
       final meal = {
         'name': name,
         'description': description,
         'userId': _userId,
         'items': items,
       };
-      
+
       await _mealService.createMeal(meal);
       await _loadMeals();
-      
+
       setState(() => _isLoading = false);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Meal created successfully')),
       );
@@ -292,7 +301,7 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
       );
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -320,15 +329,17 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const NutritionCalculatorScreen()),
-          ).then((_) => _loadMeals()); // Reload meals when returning from calculator
+            MaterialPageRoute(
+                builder: (context) => const NutritionCalculatorScreen()),
+          ).then((_) =>
+              _loadMeals()); // Reload meals when returning from calculator
         },
         backgroundColor: AppTheme.primaryColor,
         child: const Icon(Icons.add),
       ),
     );
   }
-  
+
   Widget _buildMyMealsTab() {
     if (_meals.isEmpty) {
       return Center(
@@ -346,7 +357,8 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const NutritionCalculatorScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const NutritionCalculatorScreen()),
                 ).then((_) => _loadMeals());
               },
               icon: const Icon(Icons.add),
@@ -359,7 +371,7 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
         ),
       );
     }
-    
+
     return ListView.builder(
       padding: const EdgeInsets.all(8),
       itemCount: _meals.length,
@@ -369,7 +381,8 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
           elevation: 2,
           margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             title: Text(
               meal.name,
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -407,21 +420,21 @@ class _MealCreationScreenState extends State<MealCreationScreen> with SingleTick
       },
     );
   }
-  
+
   Widget _buildTemplatesTab() {
     if (_mealTemplates.isEmpty) {
       return const Center(
         child: Text('No meal templates available'),
       );
     }
-    
+
     return ListView.builder(
       padding: const EdgeInsets.all(8),
       itemCount: _mealTemplates.keys.length,
       itemBuilder: (context, index) {
         final templateName = _mealTemplates.keys.elementAt(index);
         final foods = _mealTemplates[templateName]!;
-        
+
         return Card(
           elevation: 2,
           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),

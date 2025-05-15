@@ -24,7 +24,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   String? _errorMessage;
-  
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -41,9 +41,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     // Get screen dimensions for responsive layout
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
     final horizontalPadding = screenWidth < 600 ? 24.h : 42.h;
-    
     return Scaffold(
       backgroundColor: appTheme.whiteA700,
       appBar: _buildAppBar(context),
@@ -99,18 +97,21 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     SizedBox(height: 16.h),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, AppRoutes.authenticationScreen);
+                        Navigator.pushNamed(
+                            context, AppRoutes.authenticationScreen);
                       },
                       child: RichText(
                         text: TextSpan(
                           children: [
                             TextSpan(
                               text: "I already have ",
-                              style: CustomTextStyles.bodyMediumWorkSansBluegray700,
+                              style: CustomTextStyles
+                                  .bodyMediumWorkSansBluegray700,
                             ),
                             TextSpan(
                               text: "an account",
-                              style: CustomTextStyles.titleSmallWorkSansPrimaryBold
+                              style: CustomTextStyles
+                                  .titleSmallWorkSansPrimaryBold
                                   .copyWith(
                                 decoration: TextDecoration.underline,
                               ),
@@ -153,14 +154,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     try {
       // Store user data in registration provider
-      final registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
+      final registrationProvider =
+          Provider.of<RegistrationProvider>(context, listen: false);
       registrationProvider.setBasicInfo(
         lastName: firstNameController.text.trim(),
         firstName: namesevenController.text.trim(),
         email: emailController.text.trim(),
         password: passwordController.text,
       );
-      
+
       // Navigate to gender screen to continue registration flow
       if (mounted) {
         Navigator.pushNamed(context, AppRoutes.genderScreen);
@@ -180,7 +182,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   bool _validateForm() {
     bool isValid = true;
-    
+
     // Validate First Name
     if (firstNameController.text.trim().isEmpty) {
       setState(() {
@@ -192,7 +194,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         errorMessages['firstName'] = null;
       });
     }
-    
+
     // Validate Second Name
     if (namesevenController.text.trim().isEmpty) {
       setState(() {
@@ -204,14 +206,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
         errorMessages['secondName'] = null;
       });
     }
-    
+
     // Validate Email
     if (emailController.text.trim().isEmpty) {
       setState(() {
         errorMessages['email'] = 'Email is required';
       });
       isValid = false;
-    } else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(emailController.text)) {
+    } else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+        .hasMatch(emailController.text)) {
       setState(() {
         errorMessages['email'] = 'Please enter a valid email address';
       });
@@ -221,7 +224,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         errorMessages['email'] = null;
       });
     }
-    
+
     // Validate Password
     if (passwordController.text.isEmpty) {
       setState(() {
@@ -238,7 +241,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         errorMessages['password'] = null;
       });
     }
-    
+
     // Validate Confirm Password
     if (confirmpasswordController.text.isEmpty) {
       setState(() {
@@ -255,7 +258,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         errorMessages['confirmPassword'] = null;
       });
     }
-    
+
     return isValid;
   }
 

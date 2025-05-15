@@ -21,14 +21,14 @@ class _WeightScreenState extends State<WeightScreen> {
   int selectedWeight = 70; // Default weight
   bool _isLoading = false;
   String? _errorMessage;
-  
+
   // Define weight range
   final int minWeight = 40;
   final int maxWeight = 220;
-  
+
   // Using FixedExtentScrollController for horizontal weight selection
   late final FixedExtentScrollController _scrollController;
-  
+
   @override
   void initState() {
     super.initState();
@@ -36,7 +36,7 @@ class _WeightScreenState extends State<WeightScreen> {
       initialItem: selectedWeight - minWeight, // Initial item calculation
     );
   }
-  
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -259,37 +259,36 @@ class _WeightScreenState extends State<WeightScreen> {
       onPressed: _isLoading ? null : _completeRegistration,
     );
   }
-  
+
   /// Complete the registration process
   void _completeRegistration() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-    
+
     try {
       // Save the selected weight in provider
-      final registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
+      final registrationProvider =
+          Provider.of<RegistrationProvider>(context, listen: false);
       registrationProvider.setWeight(selectedWeight);
-      
+
       // Get complete user data for registration
       final userData = registrationProvider.getCompleteUserData();
-      
+
       // Debug print - remove in production
       print('Sending registration data: ${json.encode(userData)}');
-      
+
       // Call the register API with all collected data - making sure to use POST
-      final result = await Provider.of<AuthService>(context, listen: false).register(userData);
-      
+      final result = await Provider.of<AuthService>(context, listen: false)
+          .register(userData);
+
       // Debug - remove in production
       print('Registration successful: $result');
-      
+
       // Navigate to home screen on success
       Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.homeScreen,
-        (route) => false
-      );
+          context, AppRoutes.homeScreen, (route) => false);
     } catch (e) {
       print('Registration error: $e'); // Debug - remove in production
       setState(() {
@@ -313,7 +312,7 @@ class _WeightScreenState extends State<WeightScreen> {
   Widget _buildHorizontalWeightWheel(BuildContext context) {
     final double containerWidth = context.widthRatio(0.8);
     final double containerHeight = context.heightRatio(0.15);
-    
+
     return Container(
       width: containerWidth,
       height: containerHeight,
@@ -333,7 +332,7 @@ class _WeightScreenState extends State<WeightScreen> {
                 parent: BouncingScrollPhysics(),
               ),
               itemExtent: containerWidth * 0.08,
-              diameterRatio: 2.5, 
+              diameterRatio: 2.5,
               perspective: 0.003,
               overAndUnderCenterOpacity: 0.7,
               magnification: 1.2,
@@ -344,43 +343,42 @@ class _WeightScreenState extends State<WeightScreen> {
                 });
               },
               childDelegate: ListWheelChildBuilderDelegate(
-                childCount: maxWeight - minWeight + 1,
-                builder: (context, index) {
-                  final weight = minWeight + index;
-                  final bool isMajor = weight % 5 == 0;
-                  
-                  // Rotate the items back to be readable horizontally
-                  return RotatedBox(
-                    quarterTurns: 1, // Rotate back 90 degrees
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Weight label (only for multiples of 5)
-                        if (isMajor) 
-                          Text(
-                            weight.toString(),
-                            style: TextStyle(
-                              fontSize: context.responsiveFontSize(14),
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w500,
+                  childCount: maxWeight - minWeight + 1,
+                  builder: (context, index) {
+                    final weight = minWeight + index;
+                    final bool isMajor = weight % 5 == 0;
+
+                    // Rotate the items back to be readable horizontally
+                    return RotatedBox(
+                      quarterTurns: 1, // Rotate back 90 degrees
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Weight label (only for multiples of 5)
+                          if (isMajor)
+                            Text(
+                              weight.toString(),
+                              style: TextStyle(
+                                fontSize: context.responsiveFontSize(14),
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        
-                        // Tick mark
-                        if (!isMajor)
-                          Container(
-                            width: 2,
-                            height: containerHeight * 0.15,
-                            color: Colors.grey[400],
-                          ),
-                      ],
-                    ),
-                  );
-                }
-              ),
+
+                          // Tick mark
+                          if (!isMajor)
+                            Container(
+                              width: 2,
+                              height: containerHeight * 0.15,
+                              color: Colors.grey[400],
+                            ),
+                        ],
+                      ),
+                    );
+                  }),
             ),
           ),
-          
+
           // Center indicator (orange line)
           Center(
             child: Container(

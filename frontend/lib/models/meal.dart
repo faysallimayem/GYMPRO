@@ -21,8 +21,8 @@ class MealItem {
     return MealItem(
       id: json['id'],
       nutritionId: json['nutritionId'],
-      nutrition: json['nutrition'] != null 
-          ? Nutrition.fromJson(json['nutrition']) 
+      nutrition: json['nutrition'] != null
+          ? Nutrition.fromJson(json['nutrition'])
           : null,
       quantity: json['quantity']?.toDouble() ?? 1.0,
       unit: json['unit'] ?? 'serving',
@@ -72,11 +72,14 @@ class Meal {
     this.createdAt,
     this.updatedAt,
     this.isFavorite = false,
-  }) : 
-    this.totalCalories = totalCalories ?? items.fold(0, (sum, item) => sum + item.calories),
-    this.totalProtein = totalProtein ?? items.fold(0, (sum, item) => sum + item.protein),
-    this.totalFat = totalFat ?? items.fold(0, (sum, item) => sum + item.fat),
-    this.totalCarbohydrates = totalCarbohydrates ?? items.fold(0, (sum, item) => sum + item.carbohydrates);
+  })  : this.totalCalories =
+            totalCalories ?? items.fold(0, (sum, item) => sum + item.calories),
+        this.totalProtein =
+            totalProtein ?? items.fold(0, (sum, item) => sum + item.protein),
+        this.totalFat =
+            totalFat ?? items.fold(0, (sum, item) => sum + item.fat),
+        this.totalCarbohydrates = totalCarbohydrates ??
+            items.fold(0, (sum, item) => sum + item.carbohydrates);
 
   factory Meal.fromJson(Map<String, dynamic> json) {
     final List<MealItem> mealItems = [];
@@ -97,8 +100,10 @@ class Meal {
       totalFat: json['totalFat']?.toDouble(),
       totalCarbohydrates: json['totalCarbohydrates']?.toDouble(),
       imageUrl: json['imageUrl'],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      createdAt:
+          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      updatedAt:
+          json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
       isFavorite: json['isFavorite'] ?? false,
     );
   }

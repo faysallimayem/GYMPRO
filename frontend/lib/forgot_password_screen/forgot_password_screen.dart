@@ -38,7 +38,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       // Get the success message from the API
       final message = await Provider.of<AuthService>(context, listen: false)
           .requestPasswordReset(emailController.text.trim());
-      
+
       setState(() {
         _successMessage = message;
         _isLoading = false;
@@ -74,7 +74,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               _buildForgotPasswordHeading(context),
               SizedBox(height: 24.h),
               Padding(
-                padding: EdgeInsetsDirectional.only(start: 28.h, end: 14.h), 
+                padding: EdgeInsetsDirectional.only(start: 28.h, end: 14.h),
                 child: CustomTextFormField(
                   controller: emailController,
                   hintText: "Enter your email",
@@ -141,7 +141,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     fontSize: 18.h,
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontFamily: CustomTextStyles.headlineSmallPoppinsWhiteA700.fontFamily,
+                    fontFamily: CustomTextStyles
+                        .headlineSmallPoppinsWhiteA700.fontFamily,
                   ),
                   onPressed: _isLoading ? null : _resetPassword,
                 ),

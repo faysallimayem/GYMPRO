@@ -6,7 +6,7 @@ class ResponsiveUtils {
   /// Screen size breakpoints
   static const double mobileMaxWidth = 600;
   static const double tabletMaxWidth = 1200;
-  
+
   /// Check device type based on width
   static DeviceType getDeviceType(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
@@ -18,7 +18,7 @@ class ResponsiveUtils {
       return DeviceType.desktop;
     }
   }
-  
+
   /// Get a responsive value based on device type
   static T responsiveValue<T>({
     required BuildContext context,
@@ -27,7 +27,7 @@ class ResponsiveUtils {
     T? desktop,
   }) {
     final deviceType = getDeviceType(context);
-    
+
     switch (deviceType) {
       case DeviceType.mobile:
         return mobile;
@@ -37,12 +37,12 @@ class ResponsiveUtils {
         return desktop ?? tablet ?? mobile;
     }
   }
-  
+
   /// Calculate font size based on device type and base size
   static double responsiveFontSize(BuildContext context, double baseFontSize) {
     final deviceType = getDeviceType(context);
     final textScaler = MediaQuery.of(context).textScaler;
-    
+
     switch (deviceType) {
       case DeviceType.mobile:
         return textScaler.scale(baseFontSize);
@@ -52,9 +52,10 @@ class ResponsiveUtils {
         return textScaler.scale(baseFontSize + 4);
     }
   }
-  
+
   /// Calculate padding based on screen size percentage
-  static EdgeInsets responsivePadding(BuildContext context, {
+  static EdgeInsets responsivePadding(
+    BuildContext context, {
     double horizontal = 0.05, // 5% of screen width by default
     double vertical = 0.02, // 2% of screen height by default
   }) {
@@ -64,22 +65,27 @@ class ResponsiveUtils {
       vertical: size.height * vertical,
     );
   }
-  
+
   /// Determine if the layout should be using a single column (vertical) or multi-column layout
   static bool useSingleColumnLayout(BuildContext context) {
     return MediaQuery.of(context).size.width < 600;
   }
-  
+
+  /// Check if screen size is small (for more compact layouts)
+  static bool isSmallScreen(BuildContext context) {
+    return MediaQuery.of(context).size.width < 768;
+  }
+
   /// Get responsive width ratio based on screen size
   static double getWidthRatio(BuildContext context, double ratio) {
     return MediaQuery.of(context).size.width * ratio;
   }
-  
+
   /// Get responsive height ratio based on screen size
   static double getHeightRatio(BuildContext context, double ratio) {
     return MediaQuery.of(context).size.height * ratio;
   }
-  
+
   /// Get a responsively sized widget for differentt device types
   static Widget responsiveWidget({
     required BuildContext context,
@@ -88,7 +94,7 @@ class ResponsiveUtils {
     Widget? desktop,
   }) {
     final deviceType = getDeviceType(context);
-    
+
     switch (deviceType) {
       case DeviceType.mobile:
         return mobile;
@@ -104,41 +110,40 @@ class ResponsiveUtils {
 extension ResponsiveContext on BuildContext {
   /// Get device type directly from context
   DeviceType get deviceType => ResponsiveUtils.getDeviceType(this);
-  
+
   /// Check if device is mobile
   bool get isMobile => deviceType == DeviceType.mobile;
-  
+
   /// Check if device is tablet
   bool get isTablet => deviceType == DeviceType.tablet;
-  
+
   /// Check if device is desktop
   bool get isDesktop => deviceType == DeviceType.desktop;
-  
+
   /// Get responsive padding directly from context
   EdgeInsets responsivePadding({
     double horizontal = 0.05,
     double vertical = 0.02,
-  }) => ResponsiveUtils.responsivePadding(
-    this,
-    horizontal: horizontal,
-    vertical: vertical,
-  );
-  
+  }) =>
+      ResponsiveUtils.responsivePadding(
+        this,
+        horizontal: horizontal,
+        vertical: vertical,
+      );
+
   /// Get responsive font size directly from context
-  double responsiveFontSize(double baseFontSize) => 
-    ResponsiveUtils.responsiveFontSize(this, baseFontSize);
-    
+  double responsiveFontSize(double baseFontSize) =>
+      ResponsiveUtils.responsiveFontSize(this, baseFontSize);
+
   /// Get width ratio directly from context
-  double widthRatio(double ratio) => 
-    ResponsiveUtils.getWidthRatio(this, ratio);
-    
+  double widthRatio(double ratio) => ResponsiveUtils.getWidthRatio(this, ratio);
+
   /// Get height ratio directly from context
-  double heightRatio(double ratio) => 
-    ResponsiveUtils.getHeightRatio(this, ratio);
-    
+  double heightRatio(double ratio) =>
+      ResponsiveUtils.getHeightRatio(this, ratio);
+
   /// Use single column layout?
-  bool get useSingleColumn => 
-    ResponsiveUtils.useSingleColumnLayout(this);
+  bool get useSingleColumn => ResponsiveUtils.useSingleColumnLayout(this);
 }
 
 /// Responsive widget that adapts to different device types

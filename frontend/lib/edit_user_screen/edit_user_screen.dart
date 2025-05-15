@@ -1,288 +1,285 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
-import '../app_utils.dart';
-import '../widgets.dart';
+import '../models/user_model.dart';
+import '../services/user_service.dart';
 
-// ignore_for_file: must_be_immutable
-class EditUserScreen extends StatelessWidget {
-  EditUserScreen({super.key});
+class EditUserScreen extends StatefulWidget {
+  final User user;
 
-  TextEditingController firstNameInputController = TextEditingController();
+  const EditUserScreen({super.key, required this.user});
 
-  TextEditingController secondNameInputController = TextEditingController();
+  @override
+  State<EditUserScreen> createState() => _EditUserScreenState();
+}
 
-  TextEditingController emailInputController = TextEditingController();
+class _EditUserScreenState extends State<EditUserScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final UserService _userService = UserService();
 
-  List<String> dropdownItemList = ["Item One", "Item Two", "Item Three"];
+  late TextEditingController firstNameController;
+  late TextEditingController lastNameController;
+  late TextEditingController emailController;
+  late TextEditingController ageController;
 
-  TextEditingController noneoneController = TextEditingController();
+  late String selectedGender;
+  late String selectedRole;
+
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  List<String> genderOptions = ['Male', 'Female'];
+  List<String> roleOptions = ['client', 'coach', 'admin'];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize controllers with user data
+    firstNameController = TextEditingController(text: widget.user.firstName);
+    lastNameController = TextEditingController(text: widget.user.lastName);
+    emailController = TextEditingController(text: widget.user.email);
+    ageController =
+        TextEditingController(text: widget.user.age?.toString() ?? '');
+
+    // Initialize dropdown values
+    selectedGender = widget.user.gender;
+    selectedRole = widget.user.role;
+  }
+
+  @override
+  void dispose() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    emailController.dispose();
+    ageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Create user data object with all fields
+      final userData = {
+        'firstName': firstNameController.text.trim(),
+        'lastName': lastNameController.text.trim(),
+        'email': emailController.text.trim(),
+        'gender': selectedGender,
+      };
+
+      // Add age if provided
+      if (ageController.text.isNotEmpty) {
+        userData['age'] = int.parse(ageController.text.trim()).toString();
+      }
+
+      // Update user details
+      await _userService.updateUserDetails(widget.user.id, userData);
+
+      // Update role if changed
+      if (selectedRole != widget.user.role) {
+        await _userService.updateUserRole(widget.user.id, selectedRole);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('User updated successfully')));
+        // Pass back a result to indicate the user was updated
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error updating user: ${e.toString()}';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: appTheme.whiteA700,
-      resizeToAvoidBottomInset: false,
       appBar: _buildAppBar(context),
       body: SafeArea(
-        top: false,
-        child: Container(
-          width: double.maxFinite,
-          padding: EdgeInsetsDirectional.only(top: 34.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            children: [
-              _buildEditUserButton(context),
-              SizedBox(height: 42.h),
-              _buildFirstNameRow(context),
-              SizedBox(height: 22.h),
-              SizedBox(
-                width: double.maxFinite,
-                child: Divider(
-                  color: appTheme.black900,
-                  indent: 20.h,
-                  endIndent: 24.h,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              _buildSecondNameRow(context),
-              SizedBox(height: 16.h),
-              SizedBox(
-                width: double.maxFinite,
-                child: Divider(
-                  color: appTheme.black900,
-                  indent: 16.h,
-                  endIndent: 26.h,
-                ),
-              ),
-              SizedBox(height: 20.h),
-              _buildEmailRow(context),
-              SizedBox(height: 18.h),
-              SizedBox(
-                width: double.maxFinite,
-                child: Divider(
-                  color: appTheme.black900,
-                  indent: 16.h,
-                  endIndent: 26.h,
-                ),
-              ),
-              SizedBox(height: 24.h),
-              Padding(
-                padding: EdgeInsetsDirectional.only(
-                  start: 16.h,
-                  end: 26.h,
-                ),
-                child: CustomDropDown(
-                  icon: Container(
-                    margin: EdgeInsetsDirectional.only(start: 16.h),
-                    child: CustomImageView(
-                      imagePath: ImageConstant.imgArrowdown,
-                      height: 16.h,
-                      width: 16.h,
-                      fit: BoxFit.contain,
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTitle(context),
+                SizedBox(height: 24),
+                if (_errorMessage != null)
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(12),
+                    margin: EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.red[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(color: Colors.red[700]),
                     ),
                   ),
-                  iconSize: 16.h,
-                  hintText: "Role",
-                  items: dropdownItemList,
-                  contentPadding:
-                      EdgeInsetsDirectional.fromSTEB(12.h, 14.h, 6.h, 14.h),
+                _buildFormField(
+                  label: 'First Name',
+                  controller: firstNameController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter first name';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              SizedBox(height: 24.h),
-              _buildHorizontalScroll(context),
-              SizedBox(height: 12.h),
-              _buildBirthDateRow(context),
-              SizedBox(height: 90.h),
-              _buildConfirmButton(context)
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Section Widget
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return CustomAppBar(
-      title: AppbarSubtitleOne(
-        text: "←",
-        margin: EdgeInsetsDirectional.only(start: 8.h),
-      ),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildEditUserButton(BuildContext context) {
-    return CustomElevatedButton(
-      height: 60.h,
-      text: "Edit User",
-      margin: EdgeInsetsDirectional.only(
-        start: 86.h,
-        end: 88.h,
-      ),
-      buttonStyle: CustomButtonStyles.fillOnPrimaryContainer,
-      buttonTextStyle: CustomTextStyles.headlineSmallPoppins_1,
-    );
-  }
-
-  /// Section Widget
-  Widget _buildFirstNameInput(BuildContext context) {
-    return CustomTextFormField(
-      width: 190.h,
-      controller: firstNameInputController,
-      hintText: "Eg: Jhon",
-      alignment: AlignmentDirectional.center,
-      contentPadding: EdgeInsetsDirectional.fromSTEB(18.h, 6.h, 18.h, 2.h),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildFirstNameRow(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      margin: EdgeInsetsDirectional.only(
-        start: 16.h,
-        end: 24.h,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "First Name",
-            style: CustomTextStyles.bodyLargeBlack900_1,
-          ),
-          _buildFirstNameInput(context)
-        ],
-      ),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildSecondNameInput(BuildContext context) {
-    return CustomTextFormField(
-      width: 190.h,
-      controller: secondNameInputController,
-      hintText: "Eg: Wick",
-      alignment: AlignmentDirectional.center,
-      contentPadding: EdgeInsetsDirectional.fromSTEB(18.h, 6.h, 18.h, 2.h),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildSecondNameRow(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      margin: EdgeInsetsDirectional.only(
-        start: 16.h,
-        end: 24.h,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Second Name",
-            style: CustomTextStyles.bodyLargeBlack900_1,
-          ),
-          _buildSecondNameInput(context)
-        ],
-      ),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildEmailInput(BuildContext context) {
-    return CustomTextFormField(
-      width: 190.h,
-      controller: emailInputController,
-      hintText: "yourname@exapmle.com",
-      alignment: AlignmentDirectional.center,
-      contentPadding: EdgeInsetsDirectional.fromSTEB(18.h, 6.h, 18.h, 2.h),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildEmailRow(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      margin: EdgeInsetsDirectional.only(
-        start: 16.h,
-        end: 24.h,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Email account",
-            style: theme.textTheme.bodyLarge,
-          ),
-          _buildEmailInput(context)
-        ],
-      ),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildNoneone(BuildContext context) {
-    return Expanded(
-      child: CustomTextFormField(
-        controller: noneoneController,
-        hintText: "None",
-        hintStyle: CustomTextStyles.bodyMediumWorkSansBluegray70001,
-        textInputAction: TextInputAction.done,
-        alignment: AlignmentDirectional.center,
-        suffix: Padding(
-          padding: EdgeInsetsDirectional.only(
-            start: 16.h,
-            top: 2.h,
-            bottom: 2.h,
-          ),
-          child: Text(
-            "None",
-            style: TextStyle(
-              color: appTheme.blueGray70001,
-              fontSize: 14.fSize,
-              fontFamily: 'Work Sans',
-              fontWeight: FontWeight.w200,
-            ),
-          ),
-        ),
-        suffixConstraints: BoxConstraints(
-          maxHeight: 48.h,
-        ),
-        contentPadding: EdgeInsetsDirectional.fromSTEB(12.h, 14.h, 6.h, 14.h),
-        borderDecoration: TextFormFieldStyleHelper.underLineBlack,
-        filled: false,
-      ),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildHorizontalScroll(BuildContext context) {
-    return Align(
-      alignment: AlignmentDirectional.centerStart,
-      child: Padding(
-        padding: EdgeInsetsDirectional.only(start: 16.h),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: IntrinsicWidth(
-            child: SizedBox(
-              width: 464.h,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildNoneone(context),
-                  Padding(
-                    padding: EdgeInsetsDirectional.only(start: 42.h),
-                    child: Text(
-                      "USA",
-                      style: CustomTextStyles.bodyMediumPoppinsBluegray70001,
+                SizedBox(height: 16),
+                _buildFormField(
+                  label: 'Last Name',
+                  controller: lastNameController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter last name';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16),
+                _buildFormField(
+                  label: 'Email',
+                  controller: emailController,
+                  enabled: false, // Can't change email
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter email';
+                    }
+                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                      return 'Please enter a valid email';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16),
+                _buildFormField(
+                  label: 'Age',
+                  controller: ageController,
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value != null && value.isNotEmpty) {
+                      final age = int.tryParse(value);
+                      if (age == null) {
+                        return 'Please enter a valid number';
+                      }
+                      if (age < 12 || age > 100) {
+                        return 'Age must be between 12 and 100';
+                      }
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Gender',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: appTheme.gray300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: selectedGender,
+                      items: genderOptions.map((String gender) {
+                        return DropdownMenuItem<String>(
+                          value: gender,
+                          child: Text(gender),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          selectedGender = newValue!;
+                        });
+                      },
                     ),
-                  )
-                ],
-              ),
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Role',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: appTheme.gray300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: selectedRole,
+                      items: roleOptions.map((String role) {
+                        return DropdownMenuItem<String>(
+                          value: role,
+                          child: Text(role.capitalize()),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          selectedRole = newValue!;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                SizedBox(height: 32),
+                Center(
+                  child: _isLoading
+                      ? CircularProgressIndicator()
+                      : ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            minimumSize: Size(200, 50),
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: _submitForm,
+                          child: Text(
+                            "Update User",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                ),
+              ],
             ),
           ),
         ),
@@ -290,41 +287,105 @@ class EditUserScreen extends StatelessWidget {
     );
   }
 
-  /// Section Widget
-  Widget _buildBirthDateRow(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      margin: EdgeInsetsDirectional.only(
-        start: 16.h,
-        end: 38.h,
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      title: Text(
+        "Edit User",
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+        ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "Birth Date",
-            style: theme.textTheme.bodyLarge,
-          ),
-          Align(
-            alignment: AlignmentDirectional.bottomCenter,
-            child: Text(
-              "DD/MM/YY",
-              style: CustomTextStyles.bodyMediumWorkSansExtraLight,
-            ),
-          )
-        ],
+      backgroundColor: Colors.white,
+      elevation: 1,
+      centerTitle: true,
+      leading: IconButton(
+        icon: Icon(Icons.arrow_back, color: Colors.black),
+        onPressed: () => Navigator.pop(context),
       ),
     );
   }
 
-  /// Section Widget
-  Widget _buildConfirmButton(BuildContext context) {
-    return CustomElevatedButton(
-      height: 32.h,
-      width: 158.h,
-      text: "Confirm",
-      buttonStyle: CustomButtonStyles.fillPrimaryTL16,
-      buttonTextStyle: CustomTextStyles.bodyLargeWhiteA700,
+  Widget _buildTitle(BuildContext context) {
+    return Center(
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+        decoration: BoxDecoration(
+          color: AppTheme.primaryColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          "Edit User",
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+      ),
     );
+  }
+
+  Widget _buildFormField({
+    required String label,
+    required TextEditingController controller,
+    bool obscureText = false,
+    bool enabled = true,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          validator: validator,
+          enabled: enabled,
+          decoration: InputDecoration(
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: appTheme.gray300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: appTheme.gray300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: AppTheme.primaryColor),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.red),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: appTheme.gray300.withOpacity(0.5)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+extension StringExtension on String {
+  String capitalize() {
+    return "${this[0].toUpperCase()}${substring(1)}";
   }
 }

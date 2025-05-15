@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
-import '../app_utils.dart';
 import '../widgets.dart';
+import '../responsive_utils.dart';
+import '../routes/app_routes.dart';
 
 class AdminDashbordScreen extends StatelessWidget {
   const AdminDashbordScreen({super.key});
@@ -10,76 +11,79 @@ class AdminDashbordScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: appTheme.whiteA700,
-      appBar: _buildAppBar(context),
       body: SafeArea(
         top: false,
         child: Container(
           width: double.maxFinite,
-          padding: EdgeInsetsDirectional.symmetric(vertical: 8.h),
+          padding: context.responsivePadding(vertical: 0.02),
           child: Column(
             children: [
               Align(
-                alignment: AlignmentDirectional.centerStart,
+                alignment: Alignment.center,
                 child: Padding(
-                  padding: EdgeInsetsDirectional.only(start: 16.h),
+                  padding:
+                      EdgeInsets.symmetric(vertical: context.heightRatio(0.01)),
                   child: RichText(
                     text: TextSpan(
                       children: [
                         TextSpan(
                           text: "GYM",
-                          style: CustomTextStyles.headlineSmallPoppinsPrimary_1,
+                          style: CustomTextStyles.headlineSmallPoppinsPrimary_1
+                              .copyWith(
+                            fontSize: context.responsiveFontSize(30),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         TextSpan(
                           text: " PRO",
-                          style: CustomTextStyles.headlineSmallPoppinsPrimary_1,
+                          style: CustomTextStyles.headlineSmallPoppinsPrimary_1
+                              .copyWith(
+                            fontSize: context.responsiveFontSize(30),
+                            fontWeight: FontWeight.bold,
+                          ),
                         )
                       ],
                     ),
-                    textAlign: TextAlign.left,
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ),
-              SizedBox(height: 24.h),
+              SizedBox(height: context.heightRatio(0.02)),
               CustomElevatedButton(
-                height: 60.h,
-                text: "Admin Dashbrod",
+                height: context.heightRatio(0.06),
+                text: "Admin Dashboard",
                 margin: EdgeInsetsDirectional.only(
-                  start: 92.h,
-                  end: 82.h,
+                  start: context.widthRatio(0.1),
+                  end: context.widthRatio(0.1),
                 ),
                 buttonStyle: CustomButtonStyles.fillOnPrimaryContainer,
                 buttonTextStyle: CustomTextStyles.headlineSmallPoppins_1,
               ),
-              SizedBox(height: 18.h),
+              SizedBox(height: context.heightRatio(0.02)),
               _buildUserManagementSection(context),
-              SizedBox(height: 24.h),
+              SizedBox(height: context.heightRatio(0.02)),
               SizedBox(
                 width: double.maxFinite,
                 child: Divider(
                   color: appTheme.black900,
-                  indent: 12.h,
-                  endIndent: 32.h,
+                  indent: context.widthRatio(0.03),
+                  endIndent: context.widthRatio(0.05),
                 ),
               ),
-              SizedBox(height: 18.h),
+              SizedBox(height: context.heightRatio(0.02)),
               _buildNutritionManagementSection(context),
-              SizedBox(height: 16.h),
+              SizedBox(height: context.heightRatio(0.02)),
               SizedBox(
                 width: double.maxFinite,
                 child: Divider(
                   color: appTheme.black900,
-                  indent: 12.h,
-                  endIndent: 32.h,
+                  indent: context.widthRatio(0.03),
+                  endIndent: context.widthRatio(0.05),
                 ),
               ),
-              SizedBox(height: 22.h),
-              _buildExerciseManagementSection(context),
+              SizedBox(height: context.heightRatio(0.02)),
+              _buildCoursesManagementSection(context),
               Spacer(),
-              Text(
-                "Add Exercise",
-                style: CustomTextStyles.titleSmallWorkSansWhiteA700,
-              ),
-              SizedBox(height: 40.h)
             ],
           ),
         ),
@@ -88,51 +92,42 @@ class AdminDashbordScreen extends StatelessWidget {
   }
 
   /// Section Widget
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return CustomAppBar(
-      title: AppbarSubtitleOne(
-        text: "←",
-        margin: EdgeInsetsDirectional.only(start: 12.h),
-      ),
-    );
-  }
-
-  /// Section Widget
   Widget _buildUserManagementSection(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      margin: EdgeInsetsDirectional.only(
-        start: 12.h,
-        end: 32.h,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Align(
-            alignment: AlignmentDirectional.bottomCenter,
-            child: Text(
-              "User Managment",
-              style: CustomTextStyles.bodyLargeBlack900_1,
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, AppRoutes.userManagmentScreen);
+      },
+      child: Container(
+        width: double.maxFinite,
+        margin: EdgeInsetsDirectional.only(
+          start: context.widthRatio(0.03),
+          end: context.widthRatio(0.05),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                "User Management",
+                style: CustomTextStyles.bodyLargeBlack900_1,
+              ),
             ),
-          ),
-          Container(
-            height: 26.h,
-            width: 96.h,
-            decoration: AppDecoration.fillPrimary.copyWith(
-              borderRadius: BorderRadiusStyle.roundedBorder12,
-            ),
-            child: Stack(
-              alignment: AlignmentDirectional.center,
-              children: [
-                CustomImageView(
-                  imagePath: ImageConstant.imgLockBlack900,
-                  height: 24.h,
-                  width: 26.h,
-                )
-              ],
-            ),
-          )
-        ],
+            Container(
+              height: context.heightRatio(0.04),
+              width: context.widthRatio(0.2),
+              decoration: AppDecoration.fillPrimary.copyWith(
+                borderRadius: BorderRadiusStyle.roundedBorder12,
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.people, // Using a people icon for user management
+                  size: context.heightRatio(0.03),
+                  color: Colors.black,
+                ),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -142,34 +137,31 @@ class AdminDashbordScreen extends StatelessWidget {
     return Container(
       width: double.maxFinite,
       margin: EdgeInsetsDirectional.only(
-        start: 12.h,
-        end: 32.h,
+        start: context.widthRatio(0.03),
+        end: context.widthRatio(0.05),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Align(
-            alignment: AlignmentDirectional.bottomCenter,
+          Expanded(
             child: Text(
-              "Nutrition Managment",
+              "Supplements Management",
               style: theme.textTheme.bodyLarge,
             ),
           ),
           Container(
-            height: 26.h,
-            width: 96.h,
+            height: context.heightRatio(0.04),
+            width: context.widthRatio(0.2),
             decoration: AppDecoration.fillPrimary.copyWith(
               borderRadius: BorderRadiusStyle.roundedBorder12,
             ),
-            child: Stack(
-              alignment: AlignmentDirectional.center,
-              children: [
-                CustomImageView(
-                  imagePath: ImageConstant.imgMedicalIconINutritionBlack900,
-                  height: 24.h,
-                  width: 26.h,
-                )
-              ],
+            child: Center(
+              child: Icon(
+                Icons
+                    .medication_outlined, // Using a pill/medicine icon for supplements
+                size: context.heightRatio(0.03),
+                color: Colors.black,
+              ),
             ),
           )
         ],
@@ -178,67 +170,40 @@ class AdminDashbordScreen extends StatelessWidget {
   }
 
   /// Section Widget
-  Widget _buildExerciseManagementSection(BuildContext context) {
-    return Container(
-      height: 98.h,
-      width: double.maxFinite,
-      margin: EdgeInsetsDirectional.only(start: 12.h),
-      child: Stack(
-        alignment: AlignmentDirectional.bottomStart,
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: IntrinsicWidth(
-              child: SizedBox(
-                width: 464.h,
-                child: Column(
-                  spacing: 24,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Exercise Managment",
-                      style: theme.textTheme.bodyLarge,
-                    ),
-                    SizedBox(
-                      width: 398.h,
-                      child: Divider(
-                        color: appTheme.black900,
-                      ),
-                    ),
-                    Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: Text(
-                        "USA",
-                        style: CustomTextStyles.bodyMediumPoppinsBluegray70001,
-                      ),
-                    )
-                  ],
-                ),
+  Widget _buildCoursesManagementSection(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pushNamed(context, AppRoutes.courseManagementScreen);
+      },
+      child: Container(
+        width: double.maxFinite,
+        margin: EdgeInsetsDirectional.only(
+            start: context.widthRatio(0.03), end: context.widthRatio(0.05)),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                "Courses Management",
+                style: theme.textTheme.bodyLarge,
               ),
             ),
-          ),
-          Align(
-            alignment: AlignmentDirectional.topEnd,
-            child: Container(
-              height: 26.h,
-              width: 96.h,
-              margin: EdgeInsetsDirectional.only(end: 32.h),
+            Container(
+              height: context.heightRatio(0.04),
+              width: context.widthRatio(0.2),
               decoration: AppDecoration.fillPrimary.copyWith(
                 borderRadius: BorderRadiusStyle.roundedBorder12,
               ),
-              child: Stack(
-                alignment: AlignmentDirectional.center,
-                children: [
-                  CustomImageView(
-                    imagePath: ImageConstant.imgMaximizeBlack900,
-                    height: 24.h,
-                    width: 26.h,
-                  )
-                ],
+              child: Center(
+                child: Icon(
+                  Icons.calendar_today, // Using a calendar icon for courses
+                  size: context.heightRatio(0.03),
+                  color: Colors.black,
+                ),
               ),
-            ),
-          )
-        ],
+            )
+          ],
+        ),
       ),
     );
   }

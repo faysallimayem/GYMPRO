@@ -18,7 +18,7 @@ class _AgeScreenState extends State<AgeScreen> {
   final int minAge = 12;
   final int maxAge = 80;
   late final PageController _pageController;
-  
+
   @override
   void initState() {
     super.initState();
@@ -26,7 +26,7 @@ class _AgeScreenState extends State<AgeScreen> {
       initialPage: selectedAge - minAge,
       viewportFraction: 0.2, // Show 5 items at once
     );
-    
+
     _pageController.addListener(() {
       int page = _pageController.page!.round();
       if (page != selectedAge - minAge) {
@@ -36,7 +36,7 @@ class _AgeScreenState extends State<AgeScreen> {
       }
     });
   }
-  
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -126,7 +126,7 @@ class _AgeScreenState extends State<AgeScreen> {
       ),
     );
   }
-  
+
   Widget _buildHeader(BuildContext context) {
     return Column(
       children: [
@@ -151,7 +151,7 @@ class _AgeScreenState extends State<AgeScreen> {
       ],
     );
   }
-  
+
   Widget _buildAgeDisplay(BuildContext context) {
     return Column(
       children: [
@@ -178,7 +178,7 @@ class _AgeScreenState extends State<AgeScreen> {
     final double selectorHeight = context.heightRatio(0.08);
     final double indicatorWidth = context.widthRatio(0.15);
     final double indicatorHeight = selectorHeight * 0.7;
-    
+
     return Container(
       height: selectorHeight,
       decoration: BoxDecoration(
@@ -207,24 +207,27 @@ class _AgeScreenState extends State<AgeScreen> {
                     horizontal: context.widthRatio(0.04),
                     vertical: context.heightRatio(0.01),
                   ),
-                  decoration: isSelected ? BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 6,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ) : null,
+                  decoration: isSelected
+                      ? BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        )
+                      : null,
                   child: Text(
                     "$age",
                     style: TextStyle(
-                      fontSize: isSelected 
+                      fontSize: isSelected
                           ? context.responsiveFontSize(24)
                           : context.responsiveFontSize(20),
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                       color: isSelected ? Colors.black : Colors.black45,
                     ),
                   ),
@@ -251,14 +254,14 @@ class _AgeScreenState extends State<AgeScreen> {
       ),
     );
   }
-  
+
   Widget _buildContinueButton(BuildContext context) {
     return CustomElevatedButton(
       height: context.heightRatio(0.06),
       width: ResponsiveUtils.responsiveValue(
         context: context,
         mobile: context.widthRatio(0.5),
-        tablet: context.widthRatio(0.4), 
+        tablet: context.widthRatio(0.4),
         desktop: context.widthRatio(0.25),
       ),
       text: "Continue",
@@ -270,9 +273,10 @@ class _AgeScreenState extends State<AgeScreen> {
       ),
       onPressed: () {
         // Save selected age to registration provider
-        final registrationProvider = Provider.of<RegistrationProvider>(context, listen: false);
+        final registrationProvider =
+            Provider.of<RegistrationProvider>(context, listen: false);
         registrationProvider.setAge(selectedAge);
-        
+
         // Navigate to height screen
         Navigator.pushNamed(context, AppRoutes.heightScreen);
       },

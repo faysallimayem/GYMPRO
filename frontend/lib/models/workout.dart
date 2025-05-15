@@ -17,7 +17,7 @@ class Workout {
 
   factory Workout.fromJson(Map<String, dynamic> json) {
     List<Exercise> exercises = [];
-    
+
     if (json['exercises'] != null) {
       exercises = (json['exercises'] as List)
           .map((exercise) => Exercise.fromJson(exercise))
@@ -30,7 +30,8 @@ class Workout {
       description: json['description'],
       duration: json['duration'],
       exercises: exercises,
-      createdBy: json['createdBy'] != null ? User.fromJson(json['createdBy']) : null,
+      createdBy:
+          json['createdBy'] != null ? User.fromJson(json['createdBy']) : null,
     );
   }
 
@@ -52,6 +53,7 @@ class Exercise {
   final String muscleGroup;
   final String? difficulty;
   final String? videoUrl;
+  final String? imageUrl; // Added imageUrl property
 
   Exercise({
     required this.id,
@@ -60,6 +62,7 @@ class Exercise {
     required this.muscleGroup,
     this.difficulty,
     this.videoUrl,
+    this.imageUrl, // Added to constructor
   });
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
@@ -70,6 +73,7 @@ class Exercise {
       muscleGroup: json['muscleGroup'] ?? '',
       difficulty: json['difficulty'],
       videoUrl: json['videoUrl'],
+      imageUrl: json['imageUrl'], // Parse from JSON
     );
   }
 
@@ -81,6 +85,7 @@ class Exercise {
       'muscleGroup': muscleGroup,
       if (difficulty != null) 'difficulty': difficulty,
       if (videoUrl != null) 'videoUrl': videoUrl,
+      if (imageUrl != null) 'imageUrl': imageUrl, // Include in JSON output
     };
   }
 }
