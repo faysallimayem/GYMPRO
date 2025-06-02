@@ -10,6 +10,8 @@ import 'services/workout_service.dart';
 import 'services/user_provider.dart';
 import 'reset_password_screen/reset_password_screen.dart';
 import 'routes/route_observer.dart';
+import 'home_screen/home_screen_provider.dart';
+import 'services/navigation_provider.dart';
 
 var globalMessengerKey = GlobalKey<ScaffoldMessengerState>();
 // Define a global navigator key that can be accessed from anywhere
@@ -128,8 +130,17 @@ class MyAppState extends State<MyApp> {
         ChangeNotifierProvider(
             create: (_) => WorkoutService()..initFavorites()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => HomeScreenProvider()),
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),
       ],
       child: Consumer<AuthService>(builder: (context, authService, _) {
+        // Sync UserProvider with AuthService when user is authenticated
+        if (authService.isAuthenticated) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Provider.of<UserProvider>(context, listen: false).syncWithAuthService();
+          });
+        }
+        
         return Sizer(
           builder: (context, orientation, deviceType) {
             return MaterialApp(

@@ -37,6 +37,9 @@ class PaginatedResponse<T> {
 class UserService {
   static const String _tokenKey = 'auth_token';
 
+  // Store the last successful profile fetch
+  Map<String, dynamic>? _cachedProfile;
+
   // Get auth headers with token
   Future<Map<String, String>> get _getHeaders async {
     final prefs = await SharedPreferences.getInstance();
@@ -70,11 +73,11 @@ class UserService {
     int page = 1,
     int limit = 10,
     String? searchQuery,
+    int? gymId,
+    bool onlyGymMembers = true,
   }) async {
     try {
-      final headers = await _getHeaders;
-
-      // Build the query parameters
+      final headers = await _getHeaders;      // Build the query parameters
       final queryParams = {
         'page': page.toString(),
         'limit': limit.toString(),
@@ -83,6 +86,16 @@ class UserService {
       // Add search query if provided
       if (searchQuery != null && searchQuery.isNotEmpty) {
         queryParams['search'] = searchQuery;
+      }
+      
+      // Add gymId parameter if provided - this will filter users by their assigned gym
+      if (gymId != null) {
+        queryParams['gymId'] = gymId.toString();
+      }
+      
+      // Add filter for gym members only if specified
+      if (onlyGymMembers) {
+        queryParams['isGymMember'] = 'true';
       }
 
       final uri = Uri.parse('${AppConfig.apiUrl}/user').replace(
@@ -160,6 +173,35 @@ class UserService {
     }
   }
 
+  // Get current user profile (for admin)
+  Future<Map<String, dynamic>?> getCurrentUser() async {
+    if (_cachedProfile != null) {
+      return _cachedProfile;
+    }
+    final headers = await _getHeaders;
+    final response = await http.get(
+      Uri.parse('${AppConfig.apiUrl}/auth/me'), // Changed endpoint to /auth/me
+      headers: headers,
+    );
+    if (response.statusCode == 200) {
+      _cachedProfile = jsonDecode(response.body) as Map<String, dynamic>;
+      return _cachedProfile;
+    } else {
+      print('getCurrentUser failed: status=${response.statusCode}, body=${response.body}');
+      // Fallback to cached profile if available
+      if (_cachedProfile != null) {
+        print('Falling back to cached profile for getCurrentUser.');
+        return _cachedProfile;
+      }
+      return null;
+    }
+  }
+
+  // Call this after login to cache the profile
+  void cacheProfile(Map<String, dynamic> profile) {
+    _cachedProfile = profile;
+  }
+
   // Update user role - Admin only
   Future<User> updateUserRole(int userId, String role) async {
     try {
@@ -224,6 +266,82 @@ class UserService {
       }
     } catch (e) {
       throw Exception('Error deleting user: ${e.toString()}');
+    }
+  }
+
+  // Find a user by email
+  Future<User> findUserByEmail(String email) async {
+    try {
+      final headers = await _getHeaders;
+      final queryParams = {
+        'email': email,
+      };
+
+      final uri = Uri.parse('${AppConfig.apiUrl}/user/find-by-email').replace(
+        queryParameters: queryParams,
+      );
+
+      print('Search URI: ${uri.toString()}');
+      final response = await http.get(
+        uri,
+        headers: headers,
+      );
+
+      print('Search response status: ${response.statusCode}');
+      print('Search response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> users = jsonDecode(response.body);
+        if (users.isNotEmpty) {
+          // First try to find exact email match
+          final exactMatch = users.firstWhere(
+            (u) => u['email'].toString().toLowerCase() == email.toLowerCase(),
+            orElse: () => users.first, // If no exact match, take the first user
+          );
+          return User.fromJson(exactMatch);
+        } else {
+          print('No user found with email: $email');
+          throw Exception('User with email $email not found');
+        }
+      } else {
+        print('Failed search: ${response.statusCode}, ${response.body}');
+        throw Exception('Failed to find user: ${_getErrorMessage(response)}');
+      }
+    } catch (e) {
+      print('Error in findUserByEmail: $e');
+      throw Exception('User not found with email: $email');
+    }
+  }
+
+  // Update user gym membership status - Admin only
+  Future<User> updateGymMembership(int userId, bool isGymMember, DateTime? expiryDate) async {
+    try {
+      final headers = await _getHeaders;
+      
+      // Prepare the membership data
+      final Map<String, dynamic> membershipData = {
+        'isGymMember': isGymMember,
+      };
+      
+      // Add expiry date if provided
+      if (expiryDate != null) {
+        membershipData['membershipExpiresAt'] = expiryDate.toIso8601String();      }
+
+      final response = await http.patch(
+        Uri.parse('${AppConfig.apiUrl}/user/$userId/membership'),
+        headers: headers,
+        body: jsonEncode(membershipData),
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final data = jsonDecode(response.body);
+        return User.fromJson(data);
+      } else {
+        throw Exception(
+            'Failed to update membership status: ${_getErrorMessage(response)}');
+      }
+    } catch (e) {
+      throw Exception('Error updating membership status: ${e.toString()}');
     }
   }
 

@@ -8,6 +8,7 @@ import '../responsive_utils.dart';
 import '../routes/app_routes.dart';
 import '../widgets.dart';
 import '../services/registration_provider.dart';
+import '../widgets/gym_pro_logo.dart';
 
 class GenderScreen extends StatefulWidget {
   const GenderScreen({super.key});
@@ -145,14 +146,8 @@ class _GenderScreenState extends State<GenderScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // GYM PRO title at the top
-          Text(
-            "GYM PRO",
-            style: TextStyle(
-              fontSize: context.responsiveFontSize(28),
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
-              fontFamily: theme.textTheme.displaySmall?.fontFamily,
-            ),
+          GymProLogo(
+            size: context.responsiveFontSize(28),
           ),
           // Add spacing between texts
           SizedBox(height: context.heightRatio(0.02)),

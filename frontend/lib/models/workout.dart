@@ -1,10 +1,27 @@
+// Simplified User model for cases where we don't need the full user
+class WorkoutUser {
+  final int id;
+  final String? name;
+  final String? photoUrl;
+  
+  WorkoutUser({required this.id, this.name, this.photoUrl});
+  
+  factory WorkoutUser.fromJson(Map<String, dynamic> json) {
+    return WorkoutUser(
+      id: json['id'],
+      name: json['name'],
+      photoUrl: json['photoUrl'],
+    );
+  }
+}
+
 class Workout {
   final int id;
   final String name;
   final String? description;
   final int? duration;
   final List<Exercise> exercises;
-  final User? createdBy;
+  final WorkoutUser? createdBy;
 
   Workout({
     required this.id,
@@ -28,10 +45,9 @@ class Workout {
       id: json['id'],
       name: json['name'] ?? '',
       description: json['description'],
-      duration: json['duration'],
-      exercises: exercises,
+      duration: json['duration'],      exercises: exercises,
       createdBy:
-          json['createdBy'] != null ? User.fromJson(json['createdBy']) : null,
+          json['createdBy'] != null ? WorkoutUser.fromJson(json['createdBy']) : null,
     );
   }
 

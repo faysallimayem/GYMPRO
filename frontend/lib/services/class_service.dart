@@ -154,8 +154,7 @@ class ClassService {
     } catch (e) {
       throw Exception('Failed to book class: $e');
     }
-  }
-  // Cancel booking
+  }  // Cancel booking
   Future<void> cancelBooking(String classId, String userId) async {
     try {
       final token = await _authService.getToken();
@@ -167,6 +166,45 @@ class ClassService {
       );
     } catch (e) {
       throw Exception('Failed to cancel booking: $e');
+    }
+  }  // Get user bookings
+  Future<List<GymClass>> getUserBookings(String userId) async {
+    try {
+      print('Fetching bookings for user ID: $userId');
+      final token = await _authService.getToken();
+      
+      if (token == null) {
+        print('Authentication token is null!');
+      }
+      
+      // Create a custom endpoint that includes userId in the path
+      final response = await _apiService.get(
+        'classes/user/$userId/bookings',
+        token: token,
+      );
+
+      print('Got response type: ${response.runtimeType}');
+      
+      if (response is List) {
+        final List<dynamic> data = response;
+        print('Received ${data.length} bookings from server');
+        
+        final classes = data.map((json) {
+          final gymClass = GymClass.fromJson(json);
+          gymClass.isUserBooked = true; // Set to true since these are user bookings
+          return gymClass;
+        }).toList();
+        
+        print('Processed ${classes.length} bookings successfully');
+        return classes;
+      } else {
+        print('Unexpected response format: $response');
+        throw Exception('Invalid response format for user bookings');
+      }
+    } catch (e) {
+      print('Error loading user bookings: $e');
+      // Return empty list
+      return [];
     }
   }
 }

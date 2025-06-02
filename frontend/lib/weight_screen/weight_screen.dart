@@ -9,6 +9,7 @@ import '../routes/app_routes.dart';
 import '../widgets.dart';
 import '../services/registration_provider.dart';
 import '../services/auth_service.dart';
+import '../widgets/gym_pro_logo.dart';
 
 class WeightScreen extends StatefulWidget {
   const WeightScreen({super.key});
@@ -170,15 +171,8 @@ class _WeightScreenState extends State<WeightScreen> {
       margin: EdgeInsets.symmetric(horizontal: context.widthRatio(0.1)),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            "GYM PRO",
-            style: TextStyle(
-              fontSize: context.responsiveFontSize(28),
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.primary,
-              fontFamily: theme.textTheme.displaySmall?.fontFamily,
-            ),
+        children: [          GymProLogo(
+            size: context.responsiveFontSize(28),
           ),
           SizedBox(height: context.heightRatio(0.02)),
           Text(
@@ -279,12 +273,48 @@ class _WeightScreenState extends State<WeightScreen> {
       // Debug print - remove in production
       print('Sending registration data: ${json.encode(userData)}');
 
-      // Call the register API with all collected data - making sure to use POST
-      final result = await Provider.of<AuthService>(context, listen: false)
-          .register(userData);
+      // Call the register API with all collected data
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final result = await authService.register(userData);
 
       // Debug - remove in production
       print('Registration successful: $result');
+      
+      // Extract and store the token
+      final token = result['access_token'];
+      if (token != null) {
+        await authService.setToken(token);
+        
+        // Extract role from token and set it
+        final roleFromToken = authService.extractRoleFromToken(token);
+        if (roleFromToken != null) {
+          await authService.setUserRole(roleFromToken.toLowerCase());
+        }
+        
+        // Store user data if returned from signup
+        if (result['user'] != null) {
+          await authService.setUserDetails(result['user']);
+        } else {
+          // Fallback: store basic user data from registration form
+          await authService.setUserDetails({
+            'firstName': userData['firstName'],
+            'lastName': userData['lastName'],
+            'email': userData['email'],
+            'age': userData['age'],
+            'height': userData['height'],
+            'weight': userData['weight'],
+            'gender': userData['gender'],
+          });
+        }
+        
+        // Try to fetch additional profile data
+        try {
+          await authService.getUserProfile();
+        } catch (e) {
+          print('Could not fetch additional profile after registration: $e');
+          // This is ok, we already have the basic data stored
+        }
+      }
 
       // Navigate to home screen on success
       Navigator.pushNamedAndRemoveUntil(

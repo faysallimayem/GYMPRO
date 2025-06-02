@@ -3,9 +3,14 @@ import 'package:provider/provider.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
 import '../services/workout_service.dart';
+import '../services/coach_service.dart';
 import '../widgets.dart';
 import '../services/user_provider.dart';
+import '../models/coach_model.dart';
 import '../workout_details_screen/workout_details_screen.dart';
+import '../services/navigation_provider.dart';
+import '../routes/app_routes.dart';
+import '../widgets/gym_pro_logo.dart';
 
 class WorkoutsPage extends StatefulWidget {
   const WorkoutsPage({super.key});
@@ -115,11 +120,11 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
+                      children: [                        Container(
                           width: double.maxFinite,
                           padding: EdgeInsetsDirectional.only(start: 12.h),
-                          decoration: AppDecoration.outline4.copyWith(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
                             borderRadius: BorderRadiusStyle.roundedBorder8,
                           ),
                           child: Column(
@@ -127,21 +132,51 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                "GYM PRO",
-                                style: CustomTextStyles.headlineSmallPrimary,
+                              GymProLogo(
+                                size: 22.h,
                               ),
-                              SizedBox(
-                                width: 148.h,
-                                child: Text(
-                                  "Welcome back, $userName!",
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: CustomTextStyles
-                                      .titleLargeInterWhiteA700SemiBold,
+                              Container(
+                                height: 200.h, // Adjust height as needed
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  image: DecorationImage(
+                                    image: AssetImage(ImageConstant.imgRectangle37),
+                                    fit: BoxFit.cover,
+                                    colorFilter: ColorFilter.mode(
+                                      Colors.black.withOpacity(0.4), 
+                                      BlendMode.darken
+                                    ),
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.all(20.h),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Welcome to the workout section",
+                                        style: TextStyle(
+                                          fontSize: 24.h,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      SizedBox(height: 8.h),
+                                      Text(
+                                        "$userName",
+                                        style: TextStyle(
+                                          fontSize: 28.h,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                              SizedBox(height: 40.h)
+                              SizedBox(height: 16.h)
                             ],
                           ),
                         )
@@ -322,14 +357,20 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
       ),
     );
   }
-
   /// Section Widget
   Widget _buildCoachesSection(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final gymId = userProvider.gymId;
+    
+    // If user is not a gym member or gymId is null, don't show coaches section
+    if (!userProvider.isGymMember || gymId == null) {
+      return SizedBox.shrink();
+    }
+    
     return Container(
       width: double.maxFinite,
       margin: EdgeInsetsDirectional.only(start: 20.h),
       child: Column(
-        spacing: 12,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
@@ -339,19 +380,122 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
               style: CustomTextStyles.headlineSmallPrimary,
             ),
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Wrap(
-              direction: Axis.horizontal,
-              spacing: 14.h,
-              children: List.generate(
-                5,
-                (index) {
-                  return ListsarahOneItemWidget();
-                },
-              ),
-            ),
-          )
+          SizedBox(height: 12.h),
+          FutureBuilder<List<Coach>>(
+            future: CoachService().getCoachesByGymId(gymId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Container(
+                  height: 100.h,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                );
+              } else if (snapshot.hasError) {
+                return Container(
+                  padding: EdgeInsets.all(10.h),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8.h),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red),
+                      SizedBox(width: 8.h),
+                      Expanded(
+                        child: Text(
+                          "Failed to load coaches: ${snapshot.error}",
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Container(
+                  padding: EdgeInsets.all(16.h),
+                  child: Text(
+                    "No coaches available for this gym yet.",
+                    style: CustomTextStyles.bodyMediumRegular,
+                  ),
+                );
+              }
+              
+              final coaches = snapshot.data!;
+              return Container(
+                height: 120.h,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 4.h, vertical: 4.h),
+                  itemCount: coaches.length,
+                  separatorBuilder: (context, index) => SizedBox(width: 14.h),
+                  itemBuilder: (context, index) {
+                    final coach = coaches[index];
+                    // Only allow navigation if coach is not null
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/coach_profile_screen',
+                          arguments: {'coachId': coach.id, 'gymId': gymId},
+                        );
+                      },
+                      child: Column(
+                        children: [
+                          Container(
+                            height: 80.h,
+                            width: 80.h,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                              image: coach.photoUrl != null && coach.photoUrl!.isNotEmpty
+                                  ? DecorationImage(
+                                      image: NetworkImage(coach.photoUrl!),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                              color: coach.photoUrl == null || coach.photoUrl!.isEmpty
+                                  ? appTheme.deepOrange500.withOpacity(0.1)
+                                  : null,
+                            ),
+                            child: coach.photoUrl == null || coach.photoUrl!.isEmpty
+                                ? Center(
+                                    child: Text(
+                                      coach.firstName.isNotEmpty && coach.lastName.isNotEmpty
+                                          ? "${coach.firstName[0]}${coach.lastName[0]}"
+                                          : "C",
+                                      style: TextStyle(
+                                        fontSize: 24.h,
+                                        color: appTheme.deepOrange500,
+                                      ),
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            coach.firstName.isNotEmpty ? coach.firstName : "Coach",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: CustomTextStyles.titleSmallInterBluegray70001,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -382,6 +526,8 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
       },
     ];
 
+    final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+    
     return Padding(
       padding: EdgeInsetsDirectional.only(start: 10.h, end: 10.h, top: 20.h),
       child: Column(
@@ -406,13 +552,13 @@ class _WorkoutsPageState extends State<WorkoutsPage> {
               final group = muscleGroups[index];
               return GestureDetector(
                 onTap: () {
-                  // Use direct navigation with MaterialPageRoute instead of Navigator.pushNamed
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => WorkoutDetailsScreen(
-                        queryFilter: group['query'] as String,
-                      ),
+                  // Use navigation provider for direct navigation
+                  navigationProvider.navigateDirectly(
+                    context,
+                    WorkoutDetailsScreen(
+                      queryFilter: group['query'] as String,
                     ),
+                    AppRoutes.workoutDetailsScreen
                   );
 
                   print('Navigating to muscle group: ${group['query']}');

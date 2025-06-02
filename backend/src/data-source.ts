@@ -9,6 +9,10 @@ import { Message } from './chat/message.entity';
 import { Conversation } from './chat/conversation.entity';
 import { Meal } from './nutrition/meal.entity';
 import { MealItem } from './nutrition/meal-item.entity';
+import { GymClass } from './class/class.entity';
+import { Gym } from './gym/gym.entity';
+import { Tender } from './tender/tender.entity';
+import { Offer } from './tender/offer.entity';
 
 
 export const AppDataSource = new DataSource({
@@ -16,9 +20,9 @@ export const AppDataSource = new DataSource({
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
   username: process.env.DB_USERNAME || 'postgres',
-  password: process.env.DB_PASSWORD || 'mM112233445566!!', 
+  password: process.env.DB_PASSWORD || 'faysallimayem123', 
   database: process.env.DB_NAME || 'gympro_db',
-  entities: [User,Exercise,Workout,Nutrition,Supplement,Subscription,Message,Conversation,Meal,MealItem],  // Add all your entity files
+  entities: [User,Exercise,Workout,Nutrition,Supplement,Subscription,Message,Conversation,Meal,MealItem,GymClass,Gym,Tender,Offer],  // Add all your entity files
   synchronize: true, // Set to false in production
   logging: true,
 });

@@ -7,6 +7,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gradient_borders/gradient_borders.dart';
 import 'app_theme.dart';
 import 'app_utils.dart';
+import 'package:provider/provider.dart';
+import 'services/navigation_provider.dart';
 
 extension DropDownStyleHelper on CustomDropDown {
   static OutlineInputBorder get fillOnPrimaryContainer => OutlineInputBorder(
@@ -1332,8 +1334,6 @@ class CustomBottomBar extends StatefulWidget {
 }
 
 class CustomBottomBarState extends State<CustomBottomBar> {
-  int selectedIndex = 0;
-
   List<BottomMenuModel> bottomMenuList = [
     BottomMenuModel(
       icon: ImageConstant.imgHome,
@@ -1364,43 +1364,46 @@ class CustomBottomBarState extends State<CustomBottomBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsetsDirectional.only(
-        start: 10.h,
-        end: 10.h,
-        bottom: 10.h,
-      ),
-      child: BottomNavigationBar(
-        backgroundColor: Colors.transparent,
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        selectedFontSize: 0,
-        elevation: 0,
-        currentIndex: selectedIndex,
-        type: BottomNavigationBarType.fixed,
-        items: List.generate(bottomMenuList.length, (index) {
-          return BottomNavigationBarItem(
-            icon: CustomImageView(
-              imagePath: bottomMenuList[index].icon,
-              height: 24.h,
-              width: 26.h,
-              color: appTheme.gray600,
-            ),
-            activeIcon: CustomImageView(
-              imagePath: bottomMenuList[index].activeIcon,
-              height: 24.h,
-              width: 26.h,
-              color: theme.colorScheme.primary,
-            ),
-            label: '',
-          );
-        }),
-        onTap: (index) {
-          selectedIndex = index;
-          widget.onChanged?.call(bottomMenuList[index].type);
-          setState(() {});
-        },
-      ),
+    return Consumer<NavigationProvider>(
+      builder: (context, navigationProvider, _) {
+        return Container(
+          margin: EdgeInsetsDirectional.only(
+            start: 10.h,
+            end: 10.h,
+            bottom: 10.h,
+          ),
+          child: BottomNavigationBar(
+            backgroundColor: Colors.transparent,
+            showSelectedLabels: false,
+            showUnselectedLabels: false,
+            selectedFontSize: 0,
+            elevation: 0,
+            currentIndex: navigationProvider.currentIndex,
+            type: BottomNavigationBarType.fixed,
+            items: List.generate(bottomMenuList.length, (index) {
+              return BottomNavigationBarItem(
+                icon: CustomImageView(
+                  imagePath: bottomMenuList[index].icon,
+                  height: 24.h,
+                  width: 26.h,
+                  color: appTheme.gray600,
+                ),
+                activeIcon: CustomImageView(
+                  imagePath: bottomMenuList[index].activeIcon,
+                  height: 24.h,
+                  width: 26.h,
+                  color: theme.colorScheme.primary,
+                ),
+                label: '',
+              );
+            }),
+            onTap: (index) {
+              navigationProvider.setCurrentIndex(index);
+              widget.onChanged?.call(bottomMenuList[index].type);
+            },
+          ),
+        );
+      }
     );
   }
 }

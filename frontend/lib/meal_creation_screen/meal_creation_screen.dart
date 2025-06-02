@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import '../models/meal.dart';
 import '../models/nutrition.dart';
 import '../services/meal_service.dart';
@@ -46,6 +47,11 @@ class _MealCreationScreenState extends State<MealCreationScreen>
       // Get user data from auth service
       final userData = await _authService.getUserDetails();
       _userId = userData?['id'];
+      
+      print('MealCreationScreen: UserID retrieved: $_userId');
+      if (_userId == null) {
+        print('MealCreationScreen: Warning - User ID is null, meals may not be associated with user');
+      }
 
       await Future.wait([
         _loadMeals(),
@@ -54,33 +60,75 @@ class _MealCreationScreenState extends State<MealCreationScreen>
 
       setState(() => _isLoading = false);
     } catch (e) {
+      print('MealCreationScreen: Error in _initializeData: $e');
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading data: ${e.toString()}')),
       );
     }
   }
-
   Future<void> _loadMeals() async {
     try {
-      final meals = await _mealService.getAllMeals(userId: _userId);
-      setState(() => _meals = meals);
+      print('MealCreationScreen: Loading meals for userId: $_userId');
+      
+      // Ensure we have a valid userId
+      if (_userId == null) {
+        final userData = await _authService.getUserDetails();
+        _userId = userData?['id'];
+        print('MealCreationScreen: Retrieved user ID: $_userId');
+      }
+      
+      // Try multiple times if needed - first response might be empty right after creation
+      List<Meal> meals = [];
+      int attempts = 0;
+      
+      while (meals.isEmpty && attempts < 2) {
+        attempts++;
+        print('MealCreationScreen: Fetch attempt $attempts for userId: $_userId');
+        
+        meals = await _mealService.getAllMeals(userId: _userId);
+        print('MealCreationScreen: Loaded ${meals.length} meals on attempt $attempts');
+        
+        if (meals.isEmpty && attempts < 2) {
+          // Wait briefly before trying again
+          await Future.delayed(Duration(milliseconds: 500));
+        }
+      }
+      
+      if (mounted) {
+        setState(() => _meals = meals);
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading meals: ${e.toString()}')),
-      );
+      print('MealCreationScreen: Error loading meals: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading meals: ${e.toString()}')),
+        );
+      }
     }
   }
 
   Future<void> _loadMealTemplates() async {
     try {
+      print('MealCreationScreen: Loading meal templates');
       final templates = await _mealService.getMealTemplates();
-      setState(() => _mealTemplates = templates);
+      print('MealCreationScreen: Loaded templates with ${templates.length} categories');
+      
+      // Debug inspect templates
+      templates.forEach((category, items) {
+        print('MealCreationScreen: Category $category has ${items.length} items');
+      });
+      
+      if (mounted) {
+        setState(() => _mealTemplates = templates);
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Error loading meal templates: ${e.toString()}')),
-      );
+      print('MealCreationScreen: Error loading meal templates: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading meal templates: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -274,8 +322,24 @@ class _MealCreationScreenState extends State<MealCreationScreen>
     try {
       setState(() => _isLoading = true);
 
+      // Make sure userId is available
+      if (_userId == null) {
+        print('MealCreationScreen: Warning - User ID is null when creating meal');
+        // Try to get userId again if needed
+        final userData = await _authService.getUserDetails();
+        _userId = userData?['id'];
+        
+        if (_userId == null) {
+          print('MealCreationScreen: Error - Cannot create meal without user ID');
+          throw Exception('You must be logged in to create meals');
+        }
+      }
+
+      print('MealCreationScreen: Creating meal with userId: $_userId');
+      
       final items = foods.map((food) {
         final nutrition = Nutrition.fromJson(food);
+        print('MealCreationScreen: Adding item: ${nutrition.name} (ID: ${nutrition.id})');
         return {'nutritionId': nutrition.id, 'quantity': 1, 'unit': 'serving'};
       }).toList();
 
@@ -284,21 +348,34 @@ class _MealCreationScreenState extends State<MealCreationScreen>
         'description': description,
         'userId': _userId,
         'items': items,
-      };
-
-      await _mealService.createMeal(meal);
+      };      print('MealCreationScreen: Sending meal data: ${jsonEncode(meal)}');
+      final createdMeal = await _mealService.createMeal(meal);
+      print('MealCreationScreen: Meal created successfully with ID: ${createdMeal.id}');
+      
+      // First add the newly created meal directly to our list to ensure it shows up
+      setState(() {
+        _meals = [createdMeal, ..._meals];
+      });
+      
+      // Then try to refresh the full list from the server
       await _loadMeals();
 
       setState(() => _isLoading = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Meal created successfully')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Meal created successfully')),
+        );
+      }
     } catch (e) {
+      print('MealCreationScreen: Error creating meal from template: $e');
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error creating meal: ${e.toString()}')),
-      );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error creating meal: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -339,30 +416,119 @@ class _MealCreationScreenState extends State<MealCreationScreen>
       ),
     );
   }
-
   Widget _buildMyMealsTab() {
     if (_meals.isEmpty) {
+      return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Container(
+          height: MediaQuery.of(context).size.height - 200, // Account for app bar and tab bar
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.no_meals, size: 64, color: Colors.grey),
+                const SizedBox(height: 16),
+                const Text(
+                  'No meals found',
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const NutritionCalculatorScreen()),
+                    ).then((_) => _loadMeals());
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Create a Meal'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextButton.icon(
+                  onPressed: _loadMeals,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Refresh Meals'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadMeals,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(8),
+        itemCount: _meals.length,
+        itemBuilder: (context, index) {
+          final meal = _meals[index];
+          return Card(
+            elevation: 2,
+            margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+            child: ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              title: Text(
+                meal.name,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (meal.description != null && meal.description!.isNotEmpty)
+                    Text(
+                      meal.description!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${meal.items.length} items | '
+                    '${meal.totalCalories.toStringAsFixed(0)} cal | '
+                    '${meal.totalProtein.toStringAsFixed(1)}g protein',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteMeal(meal.id!),
+                  ),
+                ],
+              ),
+              onTap: () => _showMealDetails(meal),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTemplatesTab() {
+    if (_mealTemplates.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.no_meals, size: 64, color: Colors.grey),
+            const Icon(Icons.restaurant_menu, size: 64, color: Colors.grey),
             const SizedBox(height: 16),
             const Text(
-              'No meals found',
+              'No meal templates available',
               style: TextStyle(fontSize: 18, color: Colors.grey),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const NutritionCalculatorScreen()),
-                ).then((_) => _loadMeals());
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Create a Meal'),
+              onPressed: _loadMealTemplates,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Refresh Templates'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
               ),
@@ -374,66 +540,14 @@ class _MealCreationScreenState extends State<MealCreationScreen>
 
     return ListView.builder(
       padding: const EdgeInsets.all(8),
-      itemCount: _meals.length,
-      itemBuilder: (context, index) {
-        final meal = _meals[index];
-        return Card(
-          elevation: 2,
-          margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-          child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            title: Text(
-              meal.name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (meal.description != null && meal.description!.isNotEmpty)
-                  Text(
-                    meal.description!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                const SizedBox(height: 4),
-                Text(
-                  '${meal.items.length} items | '
-                  '${meal.totalCalories.toStringAsFixed(0)} cal | '
-                  '${meal.totalProtein.toStringAsFixed(1)}g protein',
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ],
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _deleteMeal(meal.id!),
-                ),
-              ],
-            ),
-            onTap: () => _showMealDetails(meal),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildTemplatesTab() {
-    if (_mealTemplates.isEmpty) {
-      return const Center(
-        child: Text('No meal templates available'),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(8),
       itemCount: _mealTemplates.keys.length,
       itemBuilder: (context, index) {
         final templateName = _mealTemplates.keys.elementAt(index);
         final foods = _mealTemplates[templateName]!;
+        
+        if (foods.isEmpty) {
+          return const SizedBox.shrink(); // Skip empty templates
+        }
 
         return Card(
           elevation: 2,

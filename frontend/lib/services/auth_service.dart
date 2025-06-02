@@ -116,7 +116,7 @@ class AuthService extends ChangeNotifier {
           await setToken(token);
 
           // Extract role from JWT token
-          final roleFromToken = _extractRoleFromToken(token);
+          final roleFromToken = extractRoleFromToken(token);
           if (roleFromToken != null) {
             print('Role extracted from token: $roleFromToken');
             await setUserRole(roleFromToken.toLowerCase());
@@ -154,7 +154,7 @@ class AuthService extends ChangeNotifier {
   }
 
   // Extract role from JWT token
-  String? _extractRoleFromToken(String token) {
+  String? extractRoleFromToken(String token) {
     try {
       // JWT token has three parts separated by dots
       final parts = token.split('.');
@@ -180,7 +180,7 @@ class AuthService extends ChangeNotifier {
   Future<Map<String, dynamic>> register(Map<String, dynamic> userData) async {
     try {
       final response = await http.post(
-        Uri.parse('${AppConfig.apiUrl}/auth/register'),
+        Uri.parse('${AppConfig.apiUrl}/auth/signup'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(userData),
       );
@@ -291,8 +291,7 @@ class AuthService extends ChangeNotifier {
 
       print('Fetching user profile with token: ${token.substring(0, 10)}...');
       final response = await http.get(
-        Uri.parse(
-            '${AppConfig.apiUrl}/auth/me'), // Changed endpoint to auth/me which should be protected by JWT
+        Uri.parse('${AppConfig.apiUrl}/users/profile'),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -339,10 +338,9 @@ class AuthService extends ChangeNotifier {
 
       if (token == null) {
         throw Exception('Not authenticated');
-      }
-
+      }      // Using the correct endpoint URL
       final response = await http.patch(
-        Uri.parse('${AppConfig.apiUrl}/user/profile'),
+        Uri.parse('${AppConfig.apiUrl}/users/profile'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -402,6 +400,38 @@ class AuthService extends ChangeNotifier {
       return message is String ? message : jsonEncode(message);
     } catch (e) {
       return response.body;
+    }
+  }
+  
+  // Generate an admin access code
+  Future<String> generateAdminAccessCode() async {
+    try {
+      final token = await getToken();
+      
+      if (token == null) {
+        throw Exception('Not authenticated');
+      }
+      
+      if (!isAdmin) {
+        throw Exception('You do not have permission to generate access codes');
+      }
+      
+      final response = await http.post(
+        Uri.parse('${AppConfig.apiUrl}/auth/generate-access-code'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        return responseData['code'] ?? '';
+      } else {
+        throw Exception('Failed to generate access code: ${_getErrorMessage(response)}');
+      }
+    } catch (e) {
+      throw Exception('Error generating access code: ${e.toString()}');
     }
   }
 }

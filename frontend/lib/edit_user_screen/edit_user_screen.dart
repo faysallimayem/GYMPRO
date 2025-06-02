@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
+import '../services/gym_service.dart';
+import '../services/user_provider.dart';
+import 'package:provider/provider.dart';
 
 class EditUserScreen extends StatefulWidget {
   final User user;
@@ -13,8 +16,8 @@ class EditUserScreen extends StatefulWidget {
 }
 
 class _EditUserScreenState extends State<EditUserScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final UserService _userService = UserService();
+  final _formKey = GlobalKey<FormState>();  final UserService _userService = UserService();
+  final GymService _gymService = GymService();
 
   late TextEditingController firstNameController;
   late TextEditingController lastNameController;
@@ -29,7 +32,6 @@ class _EditUserScreenState extends State<EditUserScreen> {
 
   List<String> genderOptions = ['Male', 'Female'];
   List<String> roleOptions = ['client', 'coach', 'admin'];
-
   @override
   void initState() {
     super.initState();
@@ -40,9 +42,12 @@ class _EditUserScreenState extends State<EditUserScreen> {
     ageController =
         TextEditingController(text: widget.user.age?.toString() ?? '');
 
-    // Initialize dropdown values
-    selectedGender = widget.user.gender;
-    selectedRole = widget.user.role;
+    // Initialize dropdown values with validation
+    // Make sure gender is one of the valid options, otherwise default to the first option
+    selectedGender = genderOptions.contains(widget.user.gender) ? widget.user.gender : genderOptions.first;
+    
+    // Make sure role is one of the valid options, otherwise default to 'client'
+    selectedRole = roleOptions.contains(widget.user.role) ? widget.user.role : 'client';
   }
 
   @override
@@ -80,10 +85,27 @@ class _EditUserScreenState extends State<EditUserScreen> {
 
       // Update user details
       await _userService.updateUserDetails(widget.user.id, userData);
-
+      print('User details updated for userId: \\${widget.user.id}');
       // Update role if changed
       if (selectedRole != widget.user.role) {
+        print('Role change detected: \\${widget.user.role} -> \\${selectedRole}');
         await _userService.updateUserRole(widget.user.id, selectedRole);
+        print('User role updated for userId: \\${widget.user.id} to \\${selectedRole}');
+        // Assign to gym as coach if role is now coach
+        if (selectedRole == 'coach') {
+          final adminData = await _userService.getCurrentUser();
+          if (adminData != null && adminData['managedGym'] != null && adminData['managedGym']['id'] != null) {
+            final gymId = adminData['managedGym']['id'];            try {
+              print('Assigning userId \\${widget.user.id} as coach to gymId: \\${gymId}');
+              await _gymService.assignCoachToGym(gymId, widget.user.id);
+              print('Assigned coach \\${widget.user.id} to gym \\${gymId}');
+            } catch (e) {
+              print('Failed to assign coach: \\${e}');
+              // Don't show an error to the user here since the role change is successful
+              // even if the coach assignment has issues
+            }
+          }
+        }
       }
 
       if (mounted) {
@@ -94,7 +116,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error updating user: ${e.toString()}';
+        _errorMessage = 'Error updating user: \\${e.toString()}';
       });
     } finally {
       if (mounted) {

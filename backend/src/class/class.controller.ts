@@ -6,6 +6,8 @@ import { UpdateClassDto } from './dto/update-class.dto';
 import { JwtAuthGuard, RolesGuard } from '../auth/guards.index';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '../user/role.enum';
+import { GymMemberGuard } from '../auth/gym-member.guard';
+import { RequiresGymMembership } from '../auth/requires-membership.decorator';
 
 @Controller('classes')
 export class ClassController {
@@ -57,10 +59,10 @@ export class ClassController {
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<{ message: string }> {
     await this.classService.remove(id);
     return { message: 'Class successfully deleted' };
-  }
-  // Book a class
+  }  // Book a class
   @Post(':id/book')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, GymMemberGuard)
+  @RequiresGymMembership()
   async bookClass(
     @Param('id', ParseUUIDPipe) classId: string,
     @Req() req: any,
@@ -78,10 +80,10 @@ export class ClassController {
       throw new BadRequestException('User ID is missing');
     }
     return this.classService.bookClass(classId, userId);
-  }
-  // Cancel a booking
+  }  // Cancel a booking
   @Post(':id/cancel')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, GymMemberGuard)
+  @RequiresGymMembership()
   async cancelBooking(
     @Param('id', ParseUUIDPipe) classId: string,
     @Req() req: any,
@@ -99,14 +101,24 @@ export class ClassController {
       throw new BadRequestException('User ID is missing');
     }
     return this.classService.cancelBooking(classId, userId);
-  }
-
-  // Get user's bookings
+  }  // Get user's bookings - using token
   @Get('user/bookings')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, GymMemberGuard)
+  @RequiresGymMembership()
   async getUserBookings(@Req() req: any): Promise<GymClass[]> {
     // Apply the same check here for consistency
     const userId = req.user && req.user.id ? req.user.id.toString() : undefined;
+    if (!userId) {
+      throw new BadRequestException('User ID is missing');
+    }
+    return this.classService.getUserBookings(userId);
+  }
+
+  // Get user's bookings - using path parameter
+  @Get('user/:userId/bookings')
+  @UseGuards(JwtAuthGuard, GymMemberGuard)
+  @RequiresGymMembership()
+  async getUserBookingsByPath(@Param('userId') userId: string): Promise<GymClass[]> {
     if (!userId) {
       throw new BadRequestException('User ID is missing');
     }

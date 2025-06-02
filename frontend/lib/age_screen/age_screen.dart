@@ -5,6 +5,7 @@ import '../responsive_utils.dart';
 import '../routes/app_routes.dart';
 import '../widgets.dart';
 import '../services/registration_provider.dart';
+import '../widgets/gym_pro_logo.dart';
 
 class AgeScreen extends StatefulWidget {
   const AgeScreen({super.key});
@@ -129,15 +130,8 @@ class _AgeScreenState extends State<AgeScreen> {
 
   Widget _buildHeader(BuildContext context) {
     return Column(
-      children: [
-        Text(
-          "GYM PRO",
-          style: TextStyle(
-            fontSize: context.responsiveFontSize(28),
-            fontWeight: FontWeight.bold,
-            color: appTheme.orangeA700,
-            fontFamily: theme.textTheme.displaySmall?.fontFamily,
-          ),
+      children: [        GymProLogo(
+          size: context.responsiveFontSize(28),
         ),
         SizedBox(height: context.heightRatio(0.01)),
         Text(

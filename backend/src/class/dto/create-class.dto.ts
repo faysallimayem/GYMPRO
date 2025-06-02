@@ -3,6 +3,10 @@ import { Transform } from 'class-transformer';
 import { ClassType } from '../class.entity';
 
 export class CreateClassDto {
+  @IsOptional()
+  @IsNumber()
+  gymId?: number;
+
   @IsNotEmpty()
   @IsString()
   @MaxLength(100)
@@ -56,4 +60,4 @@ export class CreateClassDto {
   @IsNotEmpty()
   @IsDateString()
   date: string;
-} 
+}

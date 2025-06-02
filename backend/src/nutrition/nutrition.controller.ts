@@ -149,4 +149,55 @@ export class NutritionController {
   ): Promise<Nutrition | null> {
     return this.nutritionService.getNutritionByName(name);
   }
+
+  @Get('public')
+  @ApiOperation({ summary: 'Get all public nutrition items' })
+  @ApiResponse({ status: 200, description: 'Return all public nutrition items' })
+  async getPublicNutritionItems(): Promise<Nutrition[]> {
+    try {
+      return await this.nutritionService.getAllNutrition();
+    } catch (error) {
+      throw new HttpException(
+        {
+          message: 'Failed to fetch public nutrition items',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('users/:userId/meals')
+  @ApiOperation({ summary: 'Get all meals for a specific user' })
+  @ApiResponse({ status: 200, description: 'Return all meals for the specified user' })
+  async getUserMeals(@Param('userId', ParseIntPipe) userId: number): Promise<Meal[]> {
+    try {
+      return await this.nutritionService.getAllMeals(userId);
+    } catch (error) {
+      throw new HttpException(
+        {
+          message: `Failed to fetch meals for user ${userId}`,
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('meals/all')
+  @ApiOperation({ summary: 'Get all meals across all users' })
+  @ApiResponse({ status: 200, description: 'Return all meals in the system' })
+  async getAllMealsAcrossUsers(): Promise<Meal[]> {
+    try {
+      return await this.nutritionService.getAllMeals();
+    } catch (error) {
+      throw new HttpException(
+        {
+          message: 'Failed to fetch all meals',
+          error: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

@@ -5,6 +5,7 @@ import { GymClass, ClassType } from './class.entity';
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 import { User } from '../user/user.entity';
+import { Gym } from '../gym/gym.entity';
 
 @Injectable()
 export class ClassService {
@@ -13,6 +14,8 @@ export class ClassService {
     private classRepository: Repository<GymClass>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Gym)
+    private gymRepository: Repository<Gym>,
   ) {}
 
   // Create a new gym class
@@ -23,9 +26,16 @@ export class ClassService {
       ...createClassDto,
       date: new Date(createClassDto.date),
     });
-    
-    console.log('New class object created:', JSON.stringify(newClass, null, 2));
 
+    // Set the gym if gymId is provided
+    if (createClassDto.gymId) {
+      const gym = await this.gymRepository.findOne({ where: { id: createClassDto.gymId } });
+      if (!gym) {
+        throw new NotFoundException(`Gym with ID ${createClassDto.gymId} not found`);
+      }
+      newClass.gym = gym;
+    }
+    
     // Set the creator if a userId is provided
     if (userId) {
       const user = await this.userRepository.findOne({ where: { id: parseInt(userId) } });
@@ -181,19 +191,36 @@ export class ClassService {
     gymClass.bookedSpots -= 1;
 
     return this.classRepository.save(gymClass);
-  }
-
-  // Get classes booked by a specific user
+  }  // Get classes booked by a specific user
   async getUserBookings(userId: string): Promise<GymClass[]> {
-    const user = await this.userRepository.findOne({ 
-      where: { id: parseInt(userId) },
-      relations: ['bookedClasses'],
-    });
+    try {
+      console.log(`Getting bookings for user with ID: ${userId}`);
+      
+      // Check if user exists
+      const user = await this.userRepository.findOne({ 
+        where: { id: parseInt(userId) }
+      });
 
-    if (!user) {
-      throw new NotFoundException(`User with ID ${userId} not found`);
+      if (!user) {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+      
+      // Find classes where this user is in the bookedUsers list
+      const classes = await this.classRepository
+        .createQueryBuilder('class')
+        .leftJoinAndSelect('class.bookedUsers', 'bookedUsers')
+        .where('bookedUsers.id = :userId', { userId: parseInt(userId) })
+        .orderBy('class.date', 'ASC')
+        .addOrderBy('class.startTime', 'ASC')
+        .getMany();
+      
+      console.log(`Found ${classes.length} bookings for user ID ${userId}`);
+      
+      // Return the classes as-is - frontend already knows these are the user's bookings
+      return classes;
+    } catch (error) {
+      console.error('Error getting user bookings:', error);
+      throw error;
     }
-
-    return user['bookedClasses'] || [];
   }
-} 
+}

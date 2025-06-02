@@ -1,5 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, ManyToMany, JoinTable, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { User } from '../user/user.entity';
+import { Gym } from '../gym/gym.entity';
 
 // Class types enum - values must match exactly with database
 export enum ClassType {
@@ -47,6 +48,11 @@ export class GymClass {
 
   @Column({ type: 'date' })
   date: Date;
+  @ManyToOne(() => Gym, gym => gym.classes, { nullable: true })
+  gym: Gym;
+
+  @Column({ nullable: true })
+  gymId: number;
 
   @ManyToOne(() => User, { nullable: true })
   createdBy: User;

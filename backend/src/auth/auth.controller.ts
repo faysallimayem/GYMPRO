@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Post, Req, UnauthorizedException, UseGuards, ConflictException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
@@ -9,6 +9,10 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SignupDto } from './dto/signup.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { WorkoutService } from 'src/workout/workout.service';
+import { AccesscodeService } from 'src/accesscode/accesscode.service';
+import { RolesGuard } from './roles.guard';
+import { Roles } from './roles.decorator';
+import { Role } from 'src/user/role.enum';
 
 @ApiTags('auth') 
 @Controller('auth')
@@ -16,7 +20,8 @@ export class AuthController {
     constructor(
         private authService: AuthService,
         private userService: UserService,
-        private workoutService: WorkoutService
+        private workoutService: WorkoutService,
+        private accesscodeService: AccesscodeService
     ) {}
 
     @Post('signup')
@@ -89,7 +94,37 @@ export class AuthController {
     @UseGuards(AuthGuard('jwt'))
     @Get('me')
     async getProfile(@Req() req) {
-        console.log(req.user);
-        return this.userService.getProfile(req.user.id);
+        // Always include managedGymId and managedGym in the response for consistency with /user/me
+        const user = await this.userService.getProfile(req.user.id);
+        if (!user) throw new NotFoundException('User not found');
+        return {
+            ...user,
+            managedGymId: user.managedGym ? user.managedGym.id : null,
+            managedGym: user.managedGym || null,
+            gymId: user.gym ? user.gym.id : null,
+            gym: user.gym || null,
+        };
+    }
+
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.ADMIN)
+    @Post('generate-access-code')
+    @ApiOperation({ summary: 'Generate access code for admin\'s managed gym' })
+    async generateAccessCode(@Req() req: any) {
+        // Get the admin user with managed gym
+        const admin = await this.userService.getProfile(req.user.id);
+        if (!admin) throw new NotFoundException('Admin not found');
+        if (!admin.managedGym) throw new ConflictException('Admin is not assigned to manage any gym');
+        
+        // Generate access code for the admin's managed gym
+        // Setting userId to 0 means it can be claimed by any user (first come, first served)
+        const result = await this.accesscodeService.generateCode(
+            { userId: 0, gymId: admin.managedGym.id, validityDays: 30 },
+            req.user.id,
+            req.ip
+        );
+        
+        return { code: result.code };
     }
 }

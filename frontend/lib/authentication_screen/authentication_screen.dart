@@ -5,7 +5,9 @@ import '../app_utils.dart';
 import '../routes/app_routes.dart';
 import '../widgets.dart';
 import '../services/auth_service.dart';
+import '../services/user_service.dart'; // Import UserService
 import '../main.dart' show navigatorKey;
+import '../widgets/gym_pro_logo.dart';
 
 // ignore_for_file: must_be_immutable
 class AuthenticationScreen extends StatefulWidget {
@@ -43,17 +45,12 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
             child: Column(
               mainAxisSize:
                   MainAxisSize.min, // Use min size to prevent overflow
-              children: [
-                // Updated header section with separate widgets for each text
+              children: [                // Updated header section with logo widget and login text
                 Column(
-                  children: [
-                    Text(
-                      "GYM PRO",
-                      style: theme.textTheme.displaySmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                      ),
+                  children: [                    GymProLogo(
+                      size: 40.h,
                     ),
-                    SizedBox(height: 8.h),
+                    SizedBox(height: 12.h),
                     Text(
                       "Login to your Account",
                       style: CustomTextStyles.bodyLargeBlack900_1,
@@ -151,6 +148,15 @@ class _AuthenticationScreenState extends State<AuthenticationScreen> {
 
       // Use the global navigator key for consistent navigation
       if (authService.isAdmin) {
+        // Cache the profile in UserService for later use
+        try {
+          final userService = UserService();
+          if (authService.userData != null) {
+            userService.cacheProfile(authService.userData!);
+          }
+        } catch (e) {
+          print('Failed to cache profile in UserService: $e');
+        }
         print('Navigating to admin dashboard using global navigator');
 
         // Use the global navigator key

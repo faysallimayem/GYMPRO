@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../routes/app_routes.dart';
 import '../services/registration_provider.dart';
+import '../widgets/gym_pro_logo.dart';
 
 class HeightScreen extends StatefulWidget {
   const HeightScreen({super.key});
@@ -66,14 +67,8 @@ class _HeightScreenState extends State<HeightScreen> {
       body: SafeArea(
         child: LayoutBuilder(builder: (context, constraints) {
           return Column(
-            children: [
-              Text(
-                "GYM PRO",
-                style: TextStyle(
-                  color: Color(0xFFFF4500),
-                  fontSize: titleFontSize,
-                  fontWeight: FontWeight.bold,
-                ),
+            children: [              GymProLogo(
+                size: titleFontSize,
               ),
               SizedBox(height: verticalSpacing),
 

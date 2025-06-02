@@ -5,6 +5,7 @@ import '../app_utils.dart';
 import '../routes/app_routes.dart';
 import '../widgets.dart';
 import '../services/registration_provider.dart';
+import '../widgets/gym_pro_logo.dart';
 
 // ignore_for_file: must_be_immutable
 class SignUpScreen extends StatefulWidget {
@@ -60,12 +61,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   end: horizontalPadding,
                   bottom: 20.h, // Add bottom padding
                 ),
-                child: Column(
-                  children: [
-                    Text(
-                      "GYM PRO",
-                      style: theme.textTheme.displaySmall,
+                child: Column(                  children: [                    GymProLogo(
+                      size: 30,
                     ),
+                    SizedBox(height: 12.h),
                     Text(
                       "Create an Account",
                       style: CustomTextStyles.bodyLargeBlack900_1,

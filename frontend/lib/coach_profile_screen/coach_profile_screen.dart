@@ -2,432 +2,290 @@ import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../app_utils.dart';
 import '../widgets.dart';
+import '../widgets/membership_screen_wrapper.dart';
+import '../services/coach_service.dart';
+import '../models/coach_model.dart';
+import '../chat_screen/chat_screen.dart';
 
-class CoachProfileScreen extends StatelessWidget {
-  const CoachProfileScreen({super.key});
+class CoachProfileScreen extends StatefulWidget {
+  final int coachId;
+  final int gymId;
+  
+  const CoachProfileScreen({
+    super.key,
+    required this.coachId,
+    required this.gymId,
+  });
+
+  @override
+  State<CoachProfileScreen> createState() => _CoachProfileScreenState();
+}
+
+class _CoachProfileScreenState extends State<CoachProfileScreen> {
+  bool isLoading = true;
+  String? error;
+  Coach? coach;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCoachData();
+  }
+
+  Future<void> _loadCoachData() async {
+    setState(() {
+      isLoading = true;
+      error = null;
+    });
+
+    try {
+      final coachService = CoachService();
+      final coaches = await coachService.getCoachesByGymId(widget.gymId);
+      Coach? coachData;
+      try {
+        coachData = coaches.firstWhere((c) => c.id == widget.coachId);
+      } catch (_) {
+        coachData = null;
+      }
+      if (coachData == null) {
+        setState(() {
+          error = 'Coach not found in this gym.';
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          coach = coachData;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        error = 'Failed to load coach information: $e';
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: appTheme.whiteA700,
-      body: SafeArea(
-        child: SizedBox(
-          width: double.maxFinite,
-          child: Column(
-            children: [
-              _buildUserCameraStack(context),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Container(
-                    width: double.maxFinite,
-                    padding: EdgeInsetsDirectional.only(
-                      start: 10.h,
-                      top: 12.h,
-                      end: 10.h,
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          "Coach Name",
-                          style: theme.textTheme.headlineLarge,
-                        ),
-                        SizedBox(height: 48.h),
-                        Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Text(
-                            "Personal Information",
-                            style:
-                                CustomTextStyles.headlineSmallWorkSansSemiBold,
-                          ),
-                        ),
-                        SizedBox(height: 6.h),
-                        _buildPersonalInfoRow(context),
-                        SizedBox(height: 30.h),
-                        _buildDateOfBirthRow(context),
-                        SizedBox(height: 28.h),
-                        Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: Container(
-                            height: 214.h,
-                            width: 120.h,
-                            margin: EdgeInsetsDirectional.only(start: 10.h),
-                            child: Stack(
-                              alignment: AlignmentDirectional.bottomCenter,
-                              children: [
-                                Align(
-                                  alignment: AlignmentDirectional.topStart,
-                                  child: Container(
-                                    height: 50.h,
-                                    width: 50.h,
-                                    decoration: BoxDecoration(
-                                      color:
-                                          theme.colorScheme.onPrimaryContainer,
-                                      borderRadius: BorderRadius.circular(
-                                        24.h,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Align(
-                                  alignment: AlignmentDirectional.topEnd,
-                                  child: Padding(
-                                    padding: EdgeInsetsDirectional.only(
-                                      top: 4.h,
-                                      end: 12.h,
-                                    ),
-                                    child: Text(
-                                      "Height",
-                                      style: CustomTextStyles.bodyLargeBlack900,
-                                    ),
-                                  ),
-                                ),
-                                Align(
-                                  alignment: AlignmentDirectional.topEnd,
-                                  child: Padding(
-                                    padding:
-                                        EdgeInsetsDirectional.only(top: 24.h),
-                                    child: Text(
-                                      "185cm",
-                                      style: theme.textTheme.titleLarge,
-                                    ),
-                                  ),
-                                ),
-                                Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    SizedBox(
-                                      width: double.maxFinite,
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            child: Column(
-                                              spacing: 46,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                CustomImageView(
-                                                  imagePath:
-                                                      ImageConstant.imgVector,
-                                                  height: 18.h,
-                                                  width: 20.h,
-                                                  margin: EdgeInsetsDirectional
-                                                      .only(start: 14.h),
-                                                ),
-                                                CustomIconButton(
-                                                  height: 50.h,
-                                                  width: 50.h,
-                                                  padding:
-                                                      EdgeInsetsDirectional.all(
-                                                          10.h),
-                                                  decoration:
-                                                      IconButtonStyleHelper
-                                                          .none,
-                                                  child: CustomImageView(
-                                                    imagePath: ImageConstant
-                                                        .imgSettingsPrimary,
-                                                  ),
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: Align(
-                                              alignment: AlignmentDirectional
-                                                  .bottomStart,
-                                              child: Padding(
-                                                padding:
-                                                    EdgeInsetsDirectional.only(
-                                                        bottom: 4.h),
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      "Gender",
-                                                      style: CustomTextStyles
-                                                          .bodyLargeBlack900,
-                                                    ),
-                                                    Text(
-                                                      "Male",
-                                                      style: theme
-                                                          .textTheme.titleLarge,
-                                                    )
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                    )
-                                  ],
-                                ),
-                                Align(
-                                  alignment: AlignmentDirectional.topCenter,
-                                  child: SizedBox(
-                                    width: double.maxFinite,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        SizedBox(
-                                          width: double.maxFinite,
-                                          child: Align(
-                                            alignment:
-                                                AlignmentDirectional.topCenter,
-                                            child: Padding(
-                                              padding:
-                                                  EdgeInsetsDirectional.only(
-                                                      top: 16.h),
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Column(
-                                                      spacing: 46,
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        CustomImageView(
-                                                          imagePath:
-                                                              ImageConstant
-                                                                  .imgVector,
-                                                          height: 18.h,
-                                                          width: 20.h,
-                                                          margin:
-                                                              EdgeInsetsDirectional
-                                                                  .only(
-                                                                      start:
-                                                                          14.h),
-                                                        ),
-                                                        CustomIconButton(
-                                                          height: 50.h,
-                                                          width: 50.h,
-                                                          padding:
-                                                              EdgeInsetsDirectional
-                                                                  .all(10.h),
-                                                          decoration:
-                                                              IconButtonStyleHelper
-                                                                  .none,
-                                                          child:
-                                                              CustomImageView(
-                                                            imagePath: ImageConstant
-                                                                .imgMaterialSymbol,
-                                                          ),
-                                                        )
-                                                      ],
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    child: Align(
-                                                      alignment:
-                                                          AlignmentDirectional
-                                                              .bottomCenter,
-                                                      child: Padding(
-                                                        padding:
-                                                            EdgeInsetsDirectional
-                                                                .only(
-                                                          end: 10.h,
-                                                          bottom: 4.h,
-                                                        ),
-                                                        child: Column(
-                                                          children: [
-                                                            Text(
-                                                              "Weight",
-                                                              style: CustomTextStyles
-                                                                  .bodyLargeBlack900,
-                                                            ),
-                                                            Text(
-                                                              "80kg",
-                                                              style: theme
-                                                                  .textTheme
-                                                                  .titleLarge,
-                                                            )
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  )
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 100.h),
-                        CustomElevatedButton(
-                          height: 32.h,
-                          width: 158.h,
-                          text: "Chat",
-                          buttonStyle: CustomButtonStyles.fillPrimaryTL16,
-                          buttonTextStyle: theme.textTheme.titleLarge!,
-                        ),
-                        SizedBox(height: 38.h)
-                      ],
-                    ),
-                  ),
+    return MembershipScreenWrapper(
+      featureName: "Coaches",
+      showBlurredPreview: true,
+      child: Scaffold(
+        backgroundColor: appTheme.whiteA700,
+        appBar: AppBar(
+          title: Text("Coach Profile"),
+          backgroundColor: theme.colorScheme.primary,
+          foregroundColor: Colors.white,
+        ),
+        floatingActionButton: coach != null ? FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChatScreen(
+                  coach: coach!,
                 ),
-              )
-            ],
+              ),
+            );
+          },
+          backgroundColor: theme.colorScheme.primary,
+          child: Icon(Icons.chat, color: Colors.white),
+        ) : null,
+        body: SafeArea(
+          child: SizedBox(
+            width: double.maxFinite,
+            child: isLoading 
+              ? Center(child: CircularProgressIndicator())
+              : error != null
+                ? _buildErrorWidget()
+                : coach != null
+                  ? _buildCoachProfile()
+                  : Center(child: Text("No coach information available")),
           ),
         ),
       ),
     );
   }
 
-  /// Section Widget
-  Widget _buildUserCameraStack(BuildContext context) {
-    return SizedBox(
-      height: 250.h,
-      width: double.maxFinite,
-      child: Stack(
-        alignment: AlignmentDirectional.bottomCenter,
+  Widget _buildErrorWidget() {
+    return Padding(
+      padding: EdgeInsets.all(16.h),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Align(
-            alignment: AlignmentDirectional.topCenter,
-            child: Container(
-              width: double.maxFinite,
-              padding: EdgeInsetsDirectional.symmetric(vertical: 14.h),
-              decoration: AppDecoration.fillPrimary1,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CustomAppBar(
-                    height: 32.h,
-                    leadingWidth: 20.h,
-                    leading: AppbarLeadingImage(
-                      imagePath: ImageConstant.imgUserPrimary,
-                      margin: EdgeInsetsDirectional.only(start: 14.h),
-                    ),
-                    title: Padding(
-                      padding: EdgeInsetsDirectional.only(start: 9.h),
-                      child: Row(
-                        children: [
-                          AppbarSubtitleFour(
-                            text: "Back",
-                          ),
-                          AppbarTitle(
-                            text: "Coach Details",
-                            margin: EdgeInsetsDirectional.only(start: 79.h),
-                          )
-                        ],
-                      ),
-                    ),
-                  )
+          Icon(Icons.error_outline, color: Colors.red, size: 48.h),
+          SizedBox(height: 16.h),
+          Text(
+            error ?? "An error occurred",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.red),
+          ),
+          SizedBox(height: 24.h),
+          ElevatedButton(
+            onPressed: _loadCoachData,
+            child: Text("Try Again"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCoachProfile() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _buildUserCameraStack(context),
+          Padding(
+            padding: EdgeInsets.all(16.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  coach?.fullName ?? "Coach",
+                  style: theme.textTheme.headlineLarge,
+                ),
+                SizedBox(height: 32.h),
+                Text(
+                  "Personal Information",
+                  style: CustomTextStyles.headlineSmallWorkSansSemiBold,
+                ),
+                SizedBox(height: 12.h),
+                _buildInfoCard(
+                  title: "Email",
+                  value: coach?.email ?? "Not available",
+                ),
+                if (coach?.specialization != null) ...[
+                  SizedBox(height: 12.h),
+                  _buildInfoCard(
+                    title: "Specialization",
+                    value: coach!.specialization!,
+                  ),
                 ],
+                if (coach?.experience != null) ...[
+                  SizedBox(height: 12.h),
+                  _buildInfoCard(
+                    title: "Experience",
+                    value: "${coach!.experience} years",
+                  ),
+                ],
+                if (coach?.bio != null) ...[
+                  SizedBox(height: 24.h),
+                  Text(
+                    "Bio",
+                    style: CustomTextStyles.headlineSmallWorkSansSemiBold,
+                  ),
+                  SizedBox(height: 8.h),
+                  Container(
+                    padding: EdgeInsets.all(16.h),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8.h),
+                    ),
+                    child: Text(coach!.bio!),
+                  ),
+                ],
+                if (coach?.certifications != null && coach!.certifications!.isNotEmpty) ...[
+                  SizedBox(height: 24.h),
+                  Text(
+                    "Certifications",
+                    style: CustomTextStyles.headlineSmallWorkSansSemiBold,
+                  ),
+                  SizedBox(height: 8.h),
+                  ...coach!.certifications!.map((cert) => Padding(
+                    padding: EdgeInsets.only(bottom: 8.h),
+                    child: Row(
+                      children: [
+                        Icon(Icons.check_circle, color: theme.colorScheme.primary),
+                        SizedBox(width: 8.h),
+                        Expanded(child: Text(cert)),
+                      ],
+                    ),
+                  )).toList(),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard({required String title, required String value}) {
+    return Container(
+      padding: EdgeInsets.all(16.h),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8.h),
+      ),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          SizedBox(width: 16.h),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Section widgets
+  Widget _buildUserCameraStack(BuildContext context) {
+    return Container(
+      height: 200.h,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.1),
+      ),
+      child: coach?.photoUrl != null && coach!.photoUrl!.isNotEmpty
+        ? Image.network(
+            coach!.photoUrl!,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => _buildPlaceholderImage(),
+          )
+        : _buildPlaceholderImage(),
+    );
+  }
+
+  Widget _buildPlaceholderImage() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            height: 100.h,
+            width: 100.h,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: theme.colorScheme.primary.withOpacity(0.2),
+            ),
+            child: Center(
+              child: Text(
+                coach != null
+                  ? coach!.firstName.isNotEmpty && coach!.lastName.isNotEmpty
+                    ? "${coach!.firstName[0]}${coach!.lastName[0]}"
+                    : "C"
+                  : "C",
+                style: TextStyle(
+                  fontSize: 40.h,
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
-          Container(
-            height: 140.h,
-            width: 142.h,
-            decoration: AppDecoration.fillOnPrimaryContainer.copyWith(
-              borderRadius: BorderRadiusStyle.circleBorder70,
-            ),
-            child: Stack(
-              alignment: AlignmentDirectional.center,
-              children: [
-                CustomImageView(
-                  imagePath: ImageConstant.imgCamera,
-                  height: 24.h,
-                  width: 26.h,
-                )
-              ],
-            ),
-          )
         ],
       ),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildPersonalInfoRow(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      margin: EdgeInsetsDirectional.symmetric(horizontal: 10.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CustomIconButton(
-            height: 50.h,
-            width: 50.h,
-            padding: EdgeInsetsDirectional.all(16.h),
-            decoration: IconButtonStyleHelper.none,
-            alignment: AlignmentDirectional.center,
-            child: CustomImageView(
-              imagePath: ImageConstant.imgVectorPrimary,
-            ),
-          ),
-          Expanded(
-            child: _buildDateOfBirthColumn(
-              context,
-              dateofbirthOne: "Email",
-              ddmmyyOne: "coachname@example.com",
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildDateOfBirthRow(BuildContext context) {
-    return Container(
-      width: double.maxFinite,
-      margin: EdgeInsetsDirectional.symmetric(horizontal: 10.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CustomIconButton(
-            height: 50.h,
-            width: 50.h,
-            padding: EdgeInsetsDirectional.all(12.h),
-            decoration: IconButtonStyleHelper.none,
-            child: CustomImageView(
-              imagePath: ImageConstant.imgFormkitDate,
-            ),
-          ),
-          Expanded(
-            child: _buildDateOfBirthColumn(
-              context,
-              dateofbirthOne: "Date of Birth",
-              ddmmyyOne: "DD/MM/YY",
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  /// Common widget
-  Widget _buildDateOfBirthColumn(
-    BuildContext context, {
-    required String dateofbirthOne,
-    required String ddmmyyOne,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          dateofbirthOne,
-          style: CustomTextStyles.bodyLargeBlack900.copyWith(
-            color: appTheme.black900,
-          ),
-        ),
-        Text(
-          ddmmyyOne,
-          style: theme.textTheme.titleLarge!.copyWith(
-            color: appTheme.black900,
-          ),
-        )
-      ],
     );
   }
 }

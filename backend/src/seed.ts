@@ -594,7 +594,7 @@ async function seedGymClasses(connection) {
       duration: 45,
       capacity: 20,
       bookedSpots: 8,
-      classType: ClassType.CARDIO,
+      classType: ClassType.Cardio,
       date: today,
       createdBy: admin
     },
@@ -607,7 +607,7 @@ async function seedGymClasses(connection) {
       duration: 60,
       capacity: 15,
       bookedSpots: 7,
-      classType: ClassType.YOGA,
+      classType: ClassType.Yoga,
       date: today,
       createdBy: coaches[0]
     },
@@ -620,7 +620,7 @@ async function seedGymClasses(connection) {
       duration: 45,
       capacity: 12,
       bookedSpots: 12,
-      classType: ClassType.STRENGTH,
+      classType: ClassType.Strength,
       date: today,
       createdBy: coaches[0]
     },
@@ -633,7 +633,7 @@ async function seedGymClasses(connection) {
       duration: 30,
       capacity: 15,
       bookedSpots: 15,
-      classType: ClassType.CARDIO,
+      classType: ClassType.Cardio,
       date: today,
       createdBy: admin
     },
@@ -646,7 +646,7 @@ async function seedGymClasses(connection) {
       duration: 45,
       capacity: 20,
       bookedSpots: 20,
-      classType: ClassType.STRENGTH,
+      classType: ClassType.Strength,
       date: today,
       createdBy: coaches[0]
     },
@@ -659,7 +659,7 @@ async function seedGymClasses(connection) {
       duration: 45,
       capacity: 15,
       bookedSpots: 10,
-      classType: ClassType.YOGA,
+      classType: ClassType.Yoga,
       date: today,
       createdBy: admin
     },
@@ -672,7 +672,7 @@ async function seedGymClasses(connection) {
       duration: 50,
       capacity: 10,
       bookedSpots: 9,
-      classType: ClassType.CARDIO,
+      classType: ClassType.Cardio,
       date: today,
       createdBy: coaches[0]
     },
@@ -686,7 +686,7 @@ async function seedGymClasses(connection) {
       duration: 60,
       capacity: 15,
       bookedSpots: 3,
-      classType: ClassType.YOGA,
+      classType: ClassType.Yoga,
       date: tomorrow,
       createdBy: admin
     },
@@ -699,7 +699,7 @@ async function seedGymClasses(connection) {
       duration: 90,
       capacity: 10,
       bookedSpots: 5,
-      classType: ClassType.STRENGTH,
+      classType: ClassType.Strength,
       date: tomorrow,
       createdBy: coaches[0]
     },
@@ -712,7 +712,7 @@ async function seedGymClasses(connection) {
       duration: 60,
       capacity: 25,
       bookedSpots: 12,
-      classType: ClassType.CARDIO,
+      classType: ClassType.Cardio,
       date: tomorrow,
       createdBy: admin
     }

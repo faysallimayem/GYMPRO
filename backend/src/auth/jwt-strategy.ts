@@ -1,10 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { jwtConstants } from './constants';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/user/user.entity';
+import { Repository } from 'typeorm';
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-    constructor() {
+    constructor(
+        @InjectRepository(User)
+        private readonly userRepository: Repository<User>, 
+    ) {
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(), 
             ignoreExpiration: false,
@@ -13,6 +20,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
 
     async validate(payload: any) {
-        return { id: payload.sub, email: payload.email, role: payload.role }; // Payload contains user info
+        // Only return the minimal user info needed for authentication/authorization
+        return {
+            id: payload.sub, // JWT uses 'sub' for user ID
+            email: payload.email,
+            role: payload.role,
+        };
     }
 }

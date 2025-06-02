@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString, MinLength, IsNumber } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MinLength, IsNumber, IsUrl } from 'class-validator';
 
 export class UpdateUserDto {
   @ApiProperty({ required: false })
@@ -22,8 +22,22 @@ export class UpdateUserDto {
   @IsNumber()
   age?: number;
 
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  height?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  weight?: number;
   @ApiProperty({ required: false, enum: ['Male', 'Female'] })
   @IsOptional()
   @IsString()
   gender?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  photoUrl?: string;
 }

@@ -5,6 +5,9 @@ import '../services/nutrition_service.dart';
 import '../widgets.dart';
 import '../nutrition_calculator_screen/nutrition_calculator_screen.dart';
 import '../meal_creation_screen/meal_creation_screen.dart';
+import '../services/navigation_provider.dart';
+import 'package:provider/provider.dart';
+import '../routes/app_routes.dart';
 
 class NutritionScreen extends StatefulWidget {
   const NutritionScreen({super.key});
@@ -28,7 +31,6 @@ class _NutritionScreenState extends State<NutritionScreen> {
     super.initState();
     _loadData();
   }
-
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
@@ -38,32 +40,50 @@ class _NutritionScreenState extends State<NutritionScreen> {
     try {
       print('NutritionScreen: Loading nutrition data');
 
-      // Load categories
-      final categories = await _nutritionService.getAllCategories();
-      print('NutritionScreen: Loaded ${categories.length} categories');
-
-      // Load nutrition items with filter if set
-      List<Nutrition> nutritionItems;
-      if (_selectedCategory != null) {
-        nutritionItems =
-            await _nutritionService.getNutritionByCategory(_selectedCategory!);
-      } else if (_searchQuery.isNotEmpty) {
-        nutritionItems = await _nutritionService.searchNutrition(_searchQuery);
-      } else {
-        nutritionItems = await _nutritionService.getAllNutrition();
+      // Load categories with detailed error handling
+      try {
+        final categories = await _nutritionService.getAllCategories();
+        print('NutritionScreen: Loaded ${categories.length} categories: $categories');
+        
+        if (mounted) {
+          setState(() {
+            _categories = categories;
+          });
+        }
+      } catch (e) {
+        print('NutritionScreen: Error loading categories: $e');
+        // Continue execution to try loading nutrition items
       }
 
-      print('NutritionScreen: Loaded ${nutritionItems.length} nutrition items');
+      // Load nutrition items with filter if set
+      List<Nutrition> nutritionItems = [];
+      try {
+        if (_selectedCategory != null) {
+          print('NutritionScreen: Loading nutrition items for category: $_selectedCategory');
+          nutritionItems = await _nutritionService.getNutritionByCategory(_selectedCategory!);
+          print('NutritionScreen: Category items response: ${nutritionItems.length} items');
+        } else if (_searchQuery.isNotEmpty) {
+          print('NutritionScreen: Searching nutrition items for: $_searchQuery');
+          nutritionItems = await _nutritionService.searchNutrition(_searchQuery);
+        } else {
+          print('NutritionScreen: Loading all nutrition items');
+          nutritionItems = await _nutritionService.getAllNutrition();
+        }
+        
+        print('NutritionScreen: Loaded ${nutritionItems.length} nutrition items');
+      } catch (e) {
+        print('NutritionScreen: Error loading nutrition items: $e');
+        throw e; // Rethrow to be caught by the outer catch block
+      }
 
       if (mounted) {
         setState(() {
-          _categories = categories;
           _nutritionItems = nutritionItems;
           _isLoading = false;
         });
       }
     } catch (e) {
-      print('NutritionScreen: Error loading data: $e');
+      print('NutritionScreen: Error in _loadData: $e');
 
       if (mounted) {
         setState(() {
@@ -75,6 +95,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
   }
 
   void _onCategorySelected(String? category) {
+    print('NutritionScreen: Category selected: $category');
     setState(() {
       _selectedCategory = category;
     });
@@ -102,14 +123,13 @@ class _NutritionScreenState extends State<NutritionScreen> {
             _buildFeatureButtons(context),
             SizedBox(height: 16),
             _buildCategoryFilter(context),
-            SizedBox(height: 16),
-            Expanded(
+            SizedBox(height: 16),            Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _error != null
                       ? _buildErrorView()
                       : _nutritionItems.isEmpty
-                          ? Center(child: Text('No nutrition items found'))
+                          ? _buildEmptyState()
                           : _buildNutritionList(context),
             ),
           ],
@@ -141,6 +161,8 @@ class _NutritionScreenState extends State<NutritionScreen> {
   }
 
   Widget _buildFeatureButtons(BuildContext context) {
+    final navigationProvider = Provider.of<NavigationProvider>(context, listen: false);
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
@@ -155,12 +177,11 @@ class _NutritionScreenState extends State<NutritionScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               onPressed: () {
-                // Direct navigation with MaterialPageRoute instead of named route
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NutritionCalculatorScreen(),
-                  ),
+                // Use navigation provider to handle navigation and state
+                navigationProvider.navigateDirectly(
+                  context, 
+                  const NutritionCalculatorScreen(),
+                  AppRoutes.nutritionCalculatorScreen
                 );
               },
             ),
@@ -176,12 +197,11 @@ class _NutritionScreenState extends State<NutritionScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               onPressed: () {
-                // Direct navigation with MaterialPageRoute instead of named route
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MealCreationScreen(),
-                  ),
+                // Use navigation provider to handle navigation and state
+                navigationProvider.navigateDirectly(
+                  context, 
+                  const MealCreationScreen(),
+                  AppRoutes.mealCreationScreen
                 );
               },
             ),
@@ -216,19 +236,22 @@ class _NutritionScreenState extends State<NutritionScreen> {
         ],
       ),
     );
-  }
-
-  Widget _buildCategoryChip(
+  }  Widget _buildCategoryChip(
       BuildContext context, String? category, String label) {
     final isSelected = (category == _selectedCategory) ||
         (category == null && _selectedCategory == null);
 
+    print('NutritionScreen: Building category chip: $label, isSelected: $isSelected');
+    
     return Padding(
       padding: EdgeInsetsDirectional.only(end: 8),
       child: FilterChip(
-        label: label,
+        label: label,  // Use the String label directly, not a Text widget
         selected: isSelected,
-        onSelected: (_) => _onCategorySelected(category),
+        onSelected: (_) {
+          print('NutritionScreen: Category selected: $label (value: $category)');
+          _onCategorySelected(category);
+        },
         backgroundColor: appTheme.blueGray100,
         selectedColor: theme.colorScheme
             .primary, // Use theme.colorScheme.primary instead of appTheme.primary
@@ -342,6 +365,47 @@ class _NutritionScreenState extends State<NutritionScreen> {
               ?.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
+    );
+  }
+  Widget _buildEmptyState() {
+    String message = 'No nutrition items found';
+    
+    if (_error != null) {
+      // Show error message if there was an error
+      message = 'Error loading nutrition data:\n${_error!}';
+    } else if (_selectedCategory != null) {
+      message = 'No nutrition items found in category: $_selectedCategory';
+    } else if (_searchQuery.isNotEmpty) {
+      message = 'No results found for: "$_searchQuery"';
+    }
+    
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.no_food, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              // Clear filters and reload
+              setState(() {
+                _selectedCategory = null;
+                _searchQuery = '';
+                _searchController.clear();
+                _error = null; // Clear any previous errors
+              });
+              _loadData();
+            },
+            child: const Text('Clear Filters'),
+          ),
+        ],
+      ),
     );
   }
 

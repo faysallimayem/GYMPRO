@@ -3,6 +3,7 @@ import '../app_theme.dart';
 import '../app_utils.dart';
 import '../widgets.dart';
 import '../services/auth_service.dart';
+import '../widgets/gym_pro_logo.dart';
 import 'package:provider/provider.dart';
 
 // ignore_for_file: must_be_immutable
@@ -166,7 +167,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       ),
     );
   }
-
   /// Section Widget
   Widget _buildForgotPasswordHeading(BuildContext context) {
     return Container(
@@ -175,6 +175,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Add GymProLogo above the "Forgot Password" text
+          Align(
+            alignment: Alignment.center,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 20.h),              child: GymProLogo(
+                size: 30,
+              ),
+            ),
+          ),
           Text(
             "Forgot Password",
             style: CustomTextStyles.headlineLargeOnPrimary,

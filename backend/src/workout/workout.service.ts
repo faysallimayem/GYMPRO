@@ -427,4 +427,27 @@ export class WorkoutService {
 
         return sampleWorkouts;
     }
+
+    async getBasicWorkouts(): Promise<Workout[]> {
+        // Return only a limited set of workouts with basic information for non-members
+        return await this.workoutRepository.find({
+            select: ['id', 'name', 'description', 'duration'],
+            take: 5, // Limit to just a few workouts
+            relations: ['exercises'],
+        });
+    }
+
+    async getBasicWorkoutsByMuscleGroup(muscleGroup: string): Promise<Workout[]> {
+        // Find workouts that include exercises for the specified muscle group
+        // but limit the detail for non-members
+        const workouts = await this.workoutRepository
+            .createQueryBuilder('workout')
+            .leftJoinAndSelect('workout.exercises', 'exercise')
+            .where('exercise.muscleGroup = :muscleGroup', { muscleGroup })
+            .select(['workout.id', 'workout.name', 'workout.description', 'workout.duration'])
+            .take(3) // Limit to just a few workouts
+            .getMany();
+        
+        return workouts;
+    }
 }

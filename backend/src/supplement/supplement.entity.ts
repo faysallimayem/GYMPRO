@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
+import { Gym } from '../gym/gym.entity';
 
 @Entity('supplement')
 export class Supplement {
@@ -16,6 +17,16 @@ export class Supplement {
 
   @Column()
   stock: number;
+  
+  @Column({ nullable: true })
+  imageUrl: string;
+  
+  @Column({ nullable: true })
+  category: string;
+  
+  @Column({ nullable: true })
+  serving: string;
 
- 
+  @ManyToOne(() => Gym, { eager: true })
+  gym: Gym;
 }

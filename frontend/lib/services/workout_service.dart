@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
+import '../models/workout.dart';
+import 'dart:math';
 // Import AuthService for consistent token key
 
 class WorkoutService extends ChangeNotifier {
@@ -18,6 +20,122 @@ class WorkoutService extends ChangeNotifier {
 
   // Use the same token key as AuthService
   static const String _tokenKey = 'auth_token';
+
+  // Mock list of exercises
+  final List<Exercise> _exercises = [
+    Exercise(
+      id: 1,
+      name: 'Push-ups',
+      description: 'A classic bodyweight exercise for chest, shoulders, and triceps.',
+      muscleGroup: 'Chest',
+      difficulty: 'Beginner',
+      imageUrl: 'https://images.unsplash.com/photo-1598971639058-fab30a5a8d13',
+    ),
+    Exercise(
+      id: 2,
+      name: 'Pull-ups',
+      description: 'An upper-body exercise targeting the back and biceps muscles.',
+      muscleGroup: 'Back',
+      difficulty: 'Intermediate',
+      imageUrl: 'https://images.unsplash.com/photo-1598971639058-c988b7ded477',
+    ),
+    Exercise(
+      id: 3,
+      name: 'Squats',
+      description: 'A compound exercise working the quadriceps, hamstrings, and glutes.',
+      muscleGroup: 'Legs',
+      difficulty: 'Beginner',
+      imageUrl: 'https://images.unsplash.com/photo-1574680178050-55c6a6a96e0a',
+    ),
+    Exercise(
+      id: 4,
+      name: 'Deadlifts',
+      description: 'A compound exercise that works the entire posterior chain.',
+      muscleGroup: 'Back',
+      difficulty: 'Intermediate',
+      imageUrl: 'https://images.unsplash.com/photo-1517964603305-4d29c11311c1',
+    ),
+    Exercise(
+      id: 5,
+      name: 'Bench Press',
+      description: 'A strength training exercise for the chest, shoulders, and triceps.',
+      muscleGroup: 'Chest',
+      difficulty: 'Intermediate',
+      imageUrl: 'https://images.unsplash.com/photo-1534368786749-b63e05c90863',
+    ),
+    Exercise(
+      id: 6,
+      name: 'Lunges',
+      description: 'A unilateral exercise that works the quadriceps, hamstrings, and glutes.',
+      muscleGroup: 'Legs',
+      difficulty: 'Beginner',
+      imageUrl: 'https://images.unsplash.com/photo-1595078475328-1ab05d0a6a0e',
+    ),
+  ];
+
+  // Mock list of workouts
+  final List<Workout> _workoutsList = [
+    Workout(
+      id: 1,
+      name: 'Full Body Workout',
+      description: 'A complete workout targeting all major muscle groups.',
+      duration: 45,
+      exercises: [], // Will be populated in the constructor
+    ),
+    Workout(
+      id: 2,
+      name: 'Upper Body Blast',
+      description: 'Focus on chest, back, shoulders, and arms.',
+      duration: 35,
+      exercises: [], // Will be populated in the constructor
+    ),
+    Workout(
+      id: 3,
+      name: 'Leg Day Challenge',
+      description: 'Intense workout for building strong and powerful legs.',
+      duration: 40,
+      exercises: [], // Will be populated in the constructor
+    ),
+    Workout(
+      id: 4,
+      name: 'Core Crusher',
+      description: 'Strengthen your abs, obliques, and lower back.',
+      duration: 30,
+      exercises: [], // Will be populated in the constructor
+    ),
+  ];
+
+  // Constructor to set up relationships
+  WorkoutService() {
+    // Full Body Workout
+    _workoutsList[0].exercises.addAll([
+      _exercises[0], // Push-ups
+      _exercises[1], // Pull-ups
+      _exercises[2], // Squats
+      _exercises[4], // Bench Press
+      _exercises[5], // Lunges
+    ]);
+
+    // Upper Body Blast
+    _workoutsList[1].exercises.addAll([
+      _exercises[0], // Push-ups
+      _exercises[1], // Pull-ups
+      _exercises[4], // Bench Press
+    ]);
+
+    // Leg Day Challenge
+    _workoutsList[2].exercises.addAll([
+      _exercises[2], // Squats
+      _exercises[3], // Deadlifts
+      _exercises[5], // Lunges
+    ]);
+
+    // Core Crusher
+    _workoutsList[3].exercises.addAll([
+      _exercises[0], // Push-ups (partial core engagement)
+      _exercises[3], // Deadlifts (core stabilization)
+    ]);
+  }
 
   // Getters
   List<Map<String, dynamic>> get workouts => _workouts;
@@ -602,5 +720,45 @@ class WorkoutService extends ChangeNotifier {
   void setSelectedWorkout(Map<String, dynamic> workout) {
     _selectedWorkout = workout;
     notifyListeners();
+  }
+
+  // Get all workouts
+  Future<List<Workout>> getAllWorkouts() async {
+    // Simulate network delay
+    await Future.delayed(Duration(milliseconds: 800));
+    return _workoutsList;
+  }
+
+  // Get workout by ID
+  Future<Workout?> getWorkoutById(int id) async {
+    // Simulate network delay
+    await Future.delayed(Duration(milliseconds: 500));
+    try {
+      return _workoutsList.firstWhere((workout) => workout.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Get recent workouts
+  Future<List<Workout>> getRecentWorkouts({int limit = 3}) async {
+    // Simulate network delay
+    await Future.delayed(Duration(milliseconds: 600));
+    
+    // For now, just return random workouts as "recent"
+    final random = Random();
+    final shuffled = [..._workoutsList]..shuffle(random);
+    
+    return shuffled.take(min(limit, shuffled.length)).toList();
+  }
+
+  // Get exercises by muscle group
+  Future<List<Exercise>> getExercisesByMuscleGroup(String muscleGroup) async {
+    // Simulate network delay
+    await Future.delayed(Duration(milliseconds: 700));
+    
+    return _exercises
+        .where((exercise) => exercise.muscleGroup == muscleGroup)
+        .toList();
   }
 }

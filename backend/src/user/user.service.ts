@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { ILike, Repository, DataSource } from 'typeorm'; // Ensure ILike is imported
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Role } from './role.enum';
@@ -18,6 +18,7 @@ export interface PaginatedResult<T> {
 export class UserService {
     constructor(
         @InjectRepository(User) private userRepository: Repository<User>,
+        private dataSource: DataSource
     ) {}
 
     async create(createUserDto: CreateUserDto): Promise<User> {
@@ -33,40 +34,63 @@ export class UserService {
 
     async getAllUsers(): Promise<User[]> {
         return await this.userRepository.find();
-    }
-    
-    async getPaginatedUsers(
+    }    async getPaginatedUsers(
         page = 1,
         limit = 10,
         search?: string,
+        adminGymId?: number
     ): Promise<PaginatedResult<User>> {
         const skip = (page - 1) * limit;
+
+        let finalWhereConditions: any[] = [];
+        const searchSpecificConditions: any[] = [];
+
+        // Add search conditions if search query is provided
+        if (search) {
+            searchSpecificConditions.push({ firstName: ILike(`%${search}%`) });
+            searchSpecificConditions.push({ lastName: ILike(`%${search}%`) });
+            searchSpecificConditions.push({ email: ILike(`%${search}%`) });
+        }
         
-        // Set up search criteria if search term is provided
-        const whereCondition = search
-            ? [
-                { firstName: ILike(`%${search}%`) },
-                { lastName: ILike(`%${search}%`) },
-                { email: ILike(`%${search}%`) },
-              ]
-            : {};
-            
-        const [users, total] = await this.userRepository.findAndCount({
-            where: whereCondition,
-            skip,
-            take: limit,
-            order: { id: 'ASC' },
-        });
-        
-        const totalPages = Math.ceil(total / limit);
-        
-        return {
-            items: users,
-            total,
-            page,
-            limit,
-            totalPages,
-        };
+        if (adminGymId) {
+            // If admin has a gym, only show users belonging to that gym
+            const gymCondition = { gym: { id: adminGymId } };
+            if (searchSpecificConditions.length > 0) {
+                finalWhereConditions = searchSpecificConditions.map(sc => ({ ...sc, ...gymCondition }));
+            } else {
+                finalWhereConditions.push(gymCondition);
+            }
+        } else {
+            // If no gym specified, just use search conditions
+            if (searchSpecificConditions.length > 0) {
+                finalWhereConditions = searchSpecificConditions;
+            }
+        }
+
+        const queryWhere = finalWhereConditions.length > 0 ? finalWhereConditions : {};
+
+        try {
+            const [items, total] = await this.userRepository.findAndCount({
+                where: queryWhere,
+                relations: ['gym', 'managedGym'], // Ensure 'gym' is loaded for filtering, 'managedGym' for admin context if needed
+                skip,
+                take: limit,
+                order: {
+                    id: 'DESC' // Order by newest first
+                }
+            });
+
+            return {
+                items,
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            };
+        } catch (error) {
+            console.error('Error fetching paginated users:', error);
+            throw error;
+        }
     }
 
     async getUserById(id: number): Promise<User> {
@@ -103,7 +127,7 @@ export class UserService {
         // Return updated user
         return this.getUserById(id);
     }
-      async deleteUser(id: number): Promise<User|null> {
+    async deleteUser(id: number): Promise<User|null> {
         // Load the user with all relations to ensure it exists
         const user = await this.userRepository.findOne({
             where: { id },
@@ -115,22 +139,135 @@ export class UserService {
         }
         
         try {
-            // First manually delete related records if needed
-            // We rely on the cascade delete feature defined in entities
+            // Start a transaction for proper cleanup of related entities
+            const queryRunner = this.dataSource.createQueryRunner();
+            await queryRunner.connect();
+            await queryRunner.startTransaction();
             
-            // Use the simpler remove method which properly handles cascades
-            // This is more reliable than the query builder for complex relationships
-            await this.userRepository.remove(user);
-            
-            return user;
+            try {
+                // Delete access_log entries that reference this user first to resolve FK constraint
+                await queryRunner.manager.query(
+                    'DELETE FROM access_log WHERE user_id = $1',
+                    [id]
+                );
+                
+                // Delete related access codes that reference this user
+                await queryRunner.manager.query(
+                    'DELETE FROM access_code WHERE user_id = $1',
+                    [id]
+                );
+                
+                // Delete any class bookings for this user
+                await queryRunner.manager.query(
+                    'DELETE FROM class_bookings WHERE user_id = $1',
+                    [id]
+                );
+                
+                // Delete any subscriptions
+                if (user.subscriptions && user.subscriptions.length > 0) {
+                    await queryRunner.manager.query(
+                        'DELETE FROM subscription WHERE "userId" = $1',
+                        [id]
+                    );
+                }
+                
+                // Delete any offers made by this user
+                await queryRunner.manager.query(
+                    'DELETE FROM offer WHERE "userId" = $1',
+                    [id]
+                );
+                
+                // Delete any tenders created by this user
+                await queryRunner.manager.query(
+                    'DELETE FROM tender WHERE "adminId" = $1',
+                    [id]
+                );
+                
+                // Finally delete the user
+                await queryRunner.manager.delete('user', { id });
+                
+                // Commit the transaction
+                await queryRunner.commitTransaction();
+                
+                return user;
+            } catch (error) {
+                // Rollback in case of error
+                await queryRunner.rollbackTransaction();
+                console.error(`Error deleting user: ${error.message}`);
+                throw new Error(`Failed to delete user: ${error.message}`);
+            } finally {
+                // Release the query runner
+                await queryRunner.release();
+            }
         } catch (error) {
             console.error(`Error deleting user: ${error.message}`);
             throw new Error(`Failed to delete user: ${error.message}`);
+        }    }
+    
+    async getProfile(id: number): Promise<User | null> {
+        console.log(`getProfile called with ID: ${id}, type: ${typeof id}`);
+        
+        try {
+            if (isNaN(id) || id <= 0) {
+                console.error(`Invalid user ID for getProfile: ${id}`);
+                throw new NotFoundException(`Invalid user ID: ${id}`);
+            }
+            
+            // Include both managedGym and gym relations
+            const user = await this.userRepository.findOne({ 
+                where: { id }, 
+                relations: ['managedGym', 'gym'] 
+            });
+            
+            if (!user) {
+                console.error(`User with ID ${id} not found in getProfile`);
+                throw new NotFoundException(`User with ID ${id} not found`);
+            }
+            
+            console.log(`Successfully retrieved profile for user ID: ${id}`);
+            return user;
+        } catch (error) {
+            console.error(`Error getting profile for user ${id}: ${error.message}`);
+            throw error;
         }
     }
 
-    async getProfile(id: number): Promise<User | null> {
-        console.log(id);
-        return await this.userRepository.findOne({ where: { id } });
+    async updateMembership(id: number, isGymMember: boolean, membershipExpiresAt?: Date): Promise<User> {
+        // Find the user first to make sure they exist
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) {
+            throw new NotFoundException(`User with ID ${id} not found`);
+        }
+
+        // Update membership details
+        const updateData: Partial<User> = { isGymMember };
+        
+        // Only set the expiry date if provided
+        if (membershipExpiresAt) {
+            updateData.membershipExpiresAt = membershipExpiresAt;
+        } else if (isGymMember && !user.membershipExpiresAt) {
+            // Set default expiry to one year from now if becoming a member and no date provided
+            const oneYearFromNow = new Date();
+            oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+            updateData.membershipExpiresAt = oneYearFromNow;
+        }
+
+        console.log(`Updating user ${id} membership: isGymMember=${isGymMember}, expiresAt=${updateData.membershipExpiresAt}`);
+        
+        // Update the user
+        await this.userRepository.update(id, updateData);
+        
+        // Return the updated user
+        return this.getUserById(id);
     }
+
+    async assignAdminToGym(adminId: number, gymId: number): Promise<User> {
+        const admin = await this.userRepository.findOne({ where: { id: adminId }, relations: ['managedGym'] });
+        if (!admin) throw new NotFoundException(`Admin with ID ${adminId} not found`);
+        if (admin.role !== Role.ADMIN) throw new ConflictException('User is not an admin');
+        admin.managedGym = { id: gymId } as any;
+        return await this.userRepository.save(admin);
+    }
+
+    
 }

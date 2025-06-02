@@ -46,11 +46,24 @@ export class AuthService {
                 console.error('bcrypt comparison error:', bcryptError.message);
                 throw new UnauthorizedException('Authentication failed');
             }
-            
-            // Password destructuring
+              // Password destructuring
             const { password: pwd, ...userData } = user;
             
-            const payload = { sub: userData.id, email: userData.email, role: userData.role };
+            // Ensure the ID is a valid number
+            const userId = typeof userData.id === 'number' ? userData.id : parseInt(String(userData.id), 10);
+            if (isNaN(userId)) {
+                console.error('Invalid user ID during login:', userData.id);
+                throw new UnauthorizedException('Authentication failed due to invalid user ID');
+            }
+            
+            console.log('Creating JWT with user ID:', userId);
+            
+            const payload = {
+              sub: userId,
+              email: userData.email,
+              role: userData.role,
+              ...(userData.role === 'admin' && userData.managedGym ? { managedGym: userData.managedGym } : {})
+            };
             const access_token = this.jwtService.sign(payload);
             console.log('Authentication successful for user:', email);
             return { access_token };
@@ -63,7 +76,7 @@ export class AuthService {
         }
     }
 
-    async signUp(createUserDto: CreateUserDto): Promise<{access_token: string}>  {
+    async signUp(createUserDto: CreateUserDto): Promise<{access_token: string, user: any}>  {
        const {email, password} = createUserDto;
 
        //checking email 
@@ -81,10 +94,13 @@ export class AuthService {
         password: hashedPassword,
        });
 
+       // Remove password from user data before returning
+       const {password: pwd, ...userDataWithoutPassword} = newUser;
+
        //JWT
        const payload = {email: newUser.email, sub: newUser.id, role: newUser.role};
        const access_token = this.jwtService.sign(payload);
-       return {access_token};
+       return {access_token, user: userDataWithoutPassword};
     } 
 
     async generateResetToken(id: number): Promise<string> {

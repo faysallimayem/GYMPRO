@@ -64,13 +64,26 @@ export class ChatGateway {
   // Handle sending an image message
   @SubscribeMessage('sendImageMessage')
   async handleSendImageMessage(
-    @MessageBody() data: { senderId: string; conversationId: number; imageBuffer: Buffer; filename: string },
+    @MessageBody() data: { senderId: string; conversationId: number; imageBuffer: Buffer | string; filename: string },
     @ConnectedSocket() client: Socket,
   ) {
+    // Convert Buffer to base64 Data URI string
+    let imageDataUri: string;
+    if (data.imageBuffer instanceof Buffer) {
+      // Default to PNG if you don't know the type
+      const mimeType = 'image/png';
+      const base64 = data.imageBuffer.toString('base64');
+      imageDataUri = `data:${mimeType};base64,${base64}`;
+    } else if (typeof data.imageBuffer === 'string' && data.imageBuffer.startsWith('data:image/')) {
+      imageDataUri = data.imageBuffer;
+    } else {
+      throw new Error('Invalid imageBuffer: must be Buffer or data URI string');
+    }
+
     const message = await this.chatService.sendImageMessage(
       data.senderId,
       data.conversationId,
-      data.imageBuffer,
+      imageDataUri,
       data.filename,
     );
 
@@ -116,8 +129,8 @@ export class ChatGateway {
     @MessageBody() data: { conversationId: number; userId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    // Mark messages as read in the conversation
-    await this.chatService.getMessages(data.conversationId);
+    // Mark messages as read in the conversation for this user
+    await this.chatService.markMessagesAsRead(data.conversationId, data.userId);
 
     // Notify other participants that messages have been read
     this.server.to(`conversation-${data.conversationId}`).emit('messagesRead', { userId: data.userId });
